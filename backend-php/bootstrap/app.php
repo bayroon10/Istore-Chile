@@ -12,10 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-    $middleware->validateCsrfTokens(except: [
-        'tienda/productos', // <-- Esta línea le dice: "Deja pasar a la tienda sin pase"
-    ]);
-})
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $middleware->validateCsrfTokens(except: [
+            'tienda/productos', // <-- Deja pasar a la tienda sin pase
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        // Si hay error de autenticación en la API, manda un JSON 401
+        $exceptions->renderable(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'No estás autenticado.'
+                ], 401);
+            }
+        });
     })->create();
