@@ -7,7 +7,7 @@ export default function Inventario() {
   const [imagenActual, setImagenActual] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
 
-  const API_URL = 'http://127.0.0.1:8000/api/productos';
+  const API_URL = 'https://istore-backend-nxvt.onrender.com/api/productos';
   
   // 🌟 AQUÍ ESTÁ LA PULSERA VIP
   const token = localStorage.getItem('token_istore'); 
@@ -107,7 +107,7 @@ export default function Inventario() {
           <tbody>
             {productos.map(p => (
               <tr key={p.id} style={{ borderBottom: '1px solid #333' }}>
-                <td style={{ padding: '15px' }}><img src={p.imagen ? `http://127.0.0.1:8000/storage/${p.imagen}` : 'https://via.placeholder.com/50'} alt="img" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', background: 'white' }}/></td>
+                <td style={{ padding: '15px' }}><img src={p.imagen ? `https://istore-backend-nxvt.onrender.com/storage/${p.imagen}` : 'https://via.placeholder.com/50'} alt="img" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', background: 'white' }}/></td>
                 <td style={{ padding: '15px' }}><b>{p.nombre}</b><br/><small style={{color:'#888'}}>{p.categoria}</small></td>
                 <td style={{ padding: '15px' }}>${p.precio}</td>
                 <td style={{ padding: '15px' }}>{p.stock_actual}</td>

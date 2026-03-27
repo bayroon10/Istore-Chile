@@ -20,7 +20,7 @@ export default function Tienda() {
   // Solo necesitamos el estado del modal. Los datos del cliente ahora viven en CheckoutForm
   const [mostrarCheckout, setMostrarCheckout] = useState(false)
 
-  const API_URL = 'http://127.0.0.1:8000/api/productos';
+  const API_URL = 'https://istore-backend-nxvt.onrender.com/api/productos';
 
   useEffect(() => { fetch(API_URL).then(res => res.json()).then(data => setProductos(data)) }, [])
 
@@ -104,7 +104,7 @@ export default function Tienda() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
               {carrito.map((c, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingBottom: '15px', borderBottom: '1px solid #eee' }}>
-                  <img src={c.imagen ? `http://127.0.0.1:8000/storage/${c.imagen}` : "https://via.placeholder.com/60"} alt={c.nombre} style={{ width: '60px', height: '60px', objectFit: 'contain', borderRadius: '10px', background: '#f5f5f7' }} />
+                  <img src={c.imagen ? `https://istore-backend-nxvt.onrender.com/storage/${c.imagen}` : "https://via.placeholder.com/60"} alt={c.nombre} style={{ width: '60px', height: '60px', objectFit: 'contain', borderRadius: '10px', background: '#f5f5f7' }} />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <span style={{ fontWeight: 'bold', color: '#1d1d1f', fontSize: '14px' }}>{c.nombre || "Producto sin Nombre"}</span>
                     <span style={{ color: '#86868b', fontSize: '12px' }}>Cant: {c.cantidad}</span>
@@ -169,7 +169,7 @@ export default function Tienda() {
                   <p style={{ fontWeight: 'bold', fontSize: '20px', color: '#1d1d1f' }}>${p.precio}</p>
                 </div>
                 
-                <img src={p.imagen ? `http://127.0.0.1:8000/storage/${p.imagen}` : "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=800"} alt="Producto" style={{ width: '100%', height: '200px', objectFit: 'contain', margin: '20px 0', zIndex: 1 }} />
+                <img src={p.imagen ? `https://istore-backend-nxvt.onrender.com/storage/${p.imagen}` : "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=800"} alt="Producto" style={{ width: '100%', height: '200px', objectFit: 'contain', margin: '20px 0', zIndex: 1 }} />
                 
                 <button onClick={() => agregarAlCarrito(p)} style={{ zIndex: 2, background: '#f5f5f7', color: '#0071e3', border: 'none', padding: '12px', borderRadius: '15px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', transition: '0.2s' }}>Añadir a la bolsa</button>
               </div>
