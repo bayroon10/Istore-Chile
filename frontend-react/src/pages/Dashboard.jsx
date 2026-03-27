@@ -7,8 +7,8 @@ export default function Dashboard() {
   const [estadisticas, setEstadisticas] = useState({ kpis: {}, grafico: [] });
   const token = localStorage.getItem('token_istore');
 
-  const API_PRODUCTOS = 'http://127.0.0.1:8000/api/productos';
-  const API_ESTADISTICAS = 'http://127.0.0.1:8000/api/estadisticas';
+  const API_PRODUCTOS = 'https://istore-backend-nxvt.onrender.com/api/productos';
+  const API_ESTADISTICAS = 'https://istore-backend-nxvt.onrender.com/api/estadisticas';
 
   useEffect(() => { 
     // 1. Traemos los productos para tus cálculos de bodega

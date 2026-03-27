@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 
 export default function Pedidos() {
   const [pedidos, setPedidos] = useState([]);
-  const API_URL = 'http://127.0.0.1:8000/api/pedidos';
+  const API_URL = 'https://istore-backend-nxvt.onrender.com/api/pedidos';
   
   // 🌟 SACAMOS LA PULSERA DEL BOLSILLO
   const token = localStorage.getItem('token_istore');

@@ -22,7 +22,7 @@ export default function CheckoutForm({ carrito, total = 0, cerrarModal, vaciarCa
   useEffect(() => {
     const token = localStorage.getItem('cliente_token');
     if (token) {
-      fetch('http://127.0.0.1:8000/api/cliente/perfil', {
+      fetch('https://istore-backend-nxvt.onrender.com/api/cliente/perfil', {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'
@@ -61,7 +61,7 @@ export default function CheckoutForm({ carrito, total = 0, cerrarModal, vaciarCa
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/pedidos', {
+      const response = await fetch('https://istore-backend-nxvt.onrender.com/api/pedidos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

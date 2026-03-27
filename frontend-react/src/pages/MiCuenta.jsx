@@ -15,7 +15,7 @@ export default function MiCuenta() {
   // Si hay token, cargamos el perfil y las compras automáticamente
   useEffect(() => {
     if (token) {
-      fetch('http://127.0.0.1:8000/api/cliente/perfil', {
+      fetch('https://istore-backend-nxvt.onrender.com/api/cliente/perfil', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -36,7 +36,7 @@ export default function MiCuenta() {
     const endpoint = modo === 'login' ? 'login' : 'registro';
     
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/cliente/${endpoint}`, {
+      const response = await fetch(`https://istore-backend-nxvt.onrender.com/api/cliente/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formulario)
