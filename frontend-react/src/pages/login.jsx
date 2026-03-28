@@ -25,12 +25,10 @@ export default function Login() {
         localStorage.setItem('usuario_istore', data.usuario);
         localStorage.setItem('rol_istore', data.rol);
         
-       Swal.fire({ title: `¡Bienvenido ${data.usuario}!`, icon: 'success', timer: 1500, showConfirmButton: false });
-        
-        // El semáforo: Si es admin va al panel, si es cliente va a su cuenta
+        Swal.fire({ title: `¡Bienvenido ${data.usuario}!`, icon: 'success', timer: 1500, showConfirmButton: false });
         if (data.rol === 'admin') {
-            navigate('/admin');
-        } else {
+        navigate('/admin');
+      } else {
             navigate('/mi-cuenta');
         }
       } else {
