@@ -22,7 +22,7 @@ class AuthController extends Controller
             return response()->json([
                 'mensaje' => 'Bienvenido al panel',
                 'token' => $token,
-                'usuario' => $user->name
+                'usuario' => $user->name,
                 'rol' => $user->rol
             ]);
         }
