@@ -23,9 +23,16 @@ export default function Login() {
         // 🌟 ¡ÉXITO! Guardamos la pulsera VIP (Token) en el navegador
         localStorage.setItem('token_istore', data.token);
         localStorage.setItem('usuario_istore', data.usuario);
+        localStorage.setItem('rol_istore', data.rol);
         
-        Swal.fire({ title: `¡Bienvenido ${data.usuario}!`, icon: 'success', timer: 1500, showConfirmButton: false });
-        navigate('/admin'); // Lo mandamos pa' adentro
+       Swal.fire({ title: `¡Bienvenido ${data.usuario}!`, icon: 'success', timer: 1500, showConfirmButton: false });
+        
+        // El semáforo: Si es admin va al panel, si es cliente va a su cuenta
+        if (data.rol === 'admin') {
+            navigate('/admin');
+        } else {
+            navigate('/mi-cuenta');
+        }
       } else {
         Swal.fire('Acceso Denegado', data.error || 'Credenciales incorrectas', 'error');
       }

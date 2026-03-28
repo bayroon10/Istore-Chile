@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Bairon Admin',
                 'password' => Hash::make('12345678'),
+                'rol' => 'admin',
             ]
         );
     }
