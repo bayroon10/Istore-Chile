@@ -35,8 +35,7 @@ export default function App() {
         <Route path="/" element={<Tienda />} />
         <Route path="/tienda" element={<Tienda />} />  {/* Agregamos esta por si acaso */}  
         <Route path="/mi-cuenta" element={<MiCuenta />} />  
-        <Route path="/login" element={<Login />} /> {/* 🌟 RUTA DEL LOGIN */}
-        
+<Route path="/acceso-secreto-bairon" element={<Login />} />        
         {/* RUTAS PRIVADAS (ADMIN) */}
         <Route path="/admin" element={
           <RutaProtegida>
