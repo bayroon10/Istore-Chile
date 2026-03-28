@@ -11,18 +11,10 @@ import MiCuenta from './pages/MiCuenta';
 // ==========================================
 // 🛡️ EL NUEVO GUARDIA DE SEGURIDAD REAL
 // ==========================================
+// ==========================================
+// 🛡️ EL GUARDIA DE SEGURIDAD (SOLO ADMINS)
+// ==========================================
 function RutaProtegida({ children }) {
-  const token = localStorage.getItem('token_istore');
-  const rol = localStorage.getItem('rol_istore'); // El guardia busca el Gafete VIP
-
-  // Si tiene token Y ADEMÁS su rol es 'admin', lo dejamos pasar al panel.
-  if (token && rol === 'admin') {
-    return children; 
-  } 
-  
-  // Si no es admin (o no está logueado), lo mandamos a su cuenta normal o al login.
-  return <Navigate to="/mi-cuenta" />; 
-}function RutaProtegida({ children }) {
   const token = localStorage.getItem('token_istore');
   const rol = localStorage.getItem('rol_istore'); // El guardia busca el Gafete VIP
 
