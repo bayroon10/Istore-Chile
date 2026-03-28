@@ -23,7 +23,7 @@ class AuthController extends Controller
                 'mensaje' => 'Bienvenido al panel',
                 'token' => $token,
                 'usuario' => $user->name,
-                'rol' => $user->rol
+                'rol' => $user->rol,
             ]);
         }
 

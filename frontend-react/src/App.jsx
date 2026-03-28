@@ -13,11 +13,26 @@ import MiCuenta from './pages/MiCuenta';
 // ==========================================
 function RutaProtegida({ children }) {
   const token = localStorage.getItem('token_istore');
-  // Si tiene el token de Sanctum, lo dejamos pasar. Si no, lo mandamos al Login.
-  if (token) {
+  const rol = localStorage.getItem('rol_istore'); // El guardia busca el Gafete VIP
+
+  // Si tiene token Y ADEMÁS su rol es 'admin', lo dejamos pasar al panel.
+  if (token && rol === 'admin') {
     return children; 
   } 
-  return <Navigate to="/login" />; 
+  
+  // Si no es admin (o no está logueado), lo mandamos a su cuenta normal o al login.
+  return <Navigate to="/mi-cuenta" />; 
+}function RutaProtegida({ children }) {
+  const token = localStorage.getItem('token_istore');
+  const rol = localStorage.getItem('rol_istore'); // El guardia busca el Gafete VIP
+
+  // Si tiene token Y ADEMÁS su rol es 'admin', lo dejamos pasar al panel.
+  if (token && rol === 'admin') {
+    return children; 
+  } 
+  
+  // Si no es admin (o no está logueado), lo mandamos a su cuenta normal o al login.
+  return <Navigate to="/mi-cuenta" />; 
 }
 
 export default function App() {
