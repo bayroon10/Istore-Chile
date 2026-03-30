@@ -12,7 +12,7 @@ class WebhookController extends Controller
     public function procesarWebhook(Request $request)
     {
         // 1. Agarramos la llave secreta del Webhook (la crearemos en un rato)
-        $endpoint_secret = env('STRIPE_WEBHOOK_SECRET');
+        $endpoint_secret = config('services.stripe.webhook_secret');
 
         $payload = @file_get_contents('php://input');
         $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';

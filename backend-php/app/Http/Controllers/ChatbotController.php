@@ -17,7 +17,7 @@ class ChatbotController extends Controller
             ->get(['nombre', 'precio', 'stock_actual'])
             ->toJson();
 
-        $apiKey = env('GEMINI_API_KEY');
+        $apiKey = config('services.gemini.api_key');
 
         // Si aún no pones la llave de IA, el bot responde con tu inventario crudo
         if(!$apiKey) {

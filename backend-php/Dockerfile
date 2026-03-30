@@ -1,27 +1,17 @@
-# Usamos la versión oficial de PHP 8.3
-FROM php:8.3-cli
+# 1. Usamos una imagen profesional optimizada para Laravel en Producción
+FROM serversideup/php:8.3-cli
 
-# Instalamos las herramientas para conectar con PostgreSQL y el soporte para ZIP
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    libzip-dev \
-    unzip \
-    && docker-php-ext-install pdo pdo_pgsql zip
+# 2. Nos movemos a la carpeta de la app
+WORKDIR /var/www/html
 
-# Instalamos Composer (El gestor de paquetes de PHP)
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Nos movemos a la carpeta de la app
-WORKDIR /app
-
-# Copiamos todo tu código a la nube
+# 3. Copiamos todo tu código a la nube
 COPY . .
 
-# Instalamos las dependencias de Laravel
+# 4. Instalamos las dependencias de Laravel (ahora sí, con todas las extensiones del sistema listas)
 RUN composer install --optimize-autoloader --no-dev
 
-# Exponemos el puerto de Render
+# 5. Exponemos el puerto de Render
 EXPOSE 10000
 
-# Encendemos el servidor, migramos la base de datos e inyectamos el Admin
+# 6. Encendemos el servidor y migramos
 CMD php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=$PORT

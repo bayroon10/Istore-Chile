@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'tienda/productos', // <-- Deja pasar a la tienda sin pase
         ]);
+
+        // Registramos el alias 'admin' para usar en rutas protegidas
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Si hay error de autenticación en la API, manda un JSON 401

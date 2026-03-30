@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Product;
+use App\Models\Producto;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
@@ -14,7 +14,7 @@ class ProductsExport implements FromCollection, WithHeadings
     public function collection()
     {
         // Traemos solo las columnas que usas en tu frontend
-        return Product::select('id', 'nombre', 'categoria', 'precio', 'stock_actual')->get();
+        return Producto::select('id', 'nombre', 'categoria', 'precio', 'stock_actual')->get();
     }
 
     public function headings(): array
