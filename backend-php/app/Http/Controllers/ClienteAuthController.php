@@ -4,22 +4,26 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Pedido;
 use Illuminate\Support\Facades\Hash;
 
 class ClienteAuthController extends Controller
 {
     public function registro(Request $request)
     {
-        $request->validate(['name' => 'required', 'email' => 'required|email|unique:users', 'password' => 'required|min:6']);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password)
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users',
+            'password' => 'required|min:6',
         ]);
 
-        $token = $user->createToken('cliente_token')->plainTextToken;
+        $user = User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            // 'role' default es 'customer', no hace falta pasarlo
+        ]);
+
+        $token = $user->createToken('customer_token')->plainTextToken;
         return response()->json(['token' => $token, 'user' => $user], 201);
     }
 
@@ -31,19 +35,19 @@ class ClienteAuthController extends Controller
             return response()->json(['error' => 'Correo o contraseña incorrectos'], 401);
         }
 
-        $token = $user->createToken('cliente_token')->plainTextToken;
+        $token = $user->createToken('customer_token')->plainTextToken;
         return response()->json(['token' => $token, 'user' => $user]);
     }
 
     public function perfil(Request $request)
     {
         $user = $request->user();
-        // Buscamos todas las compras que coincidan con el correo de este cliente
-        $pedidos = Pedido::where('cliente_email', $user->email)->orderBy('created_at', 'desc')->get();
-        
+
+        // El historial de compras se reincorporará en la Fase 1 Paso 2
+        // cuando tengamos los modelos Order y OrderItem
         return response()->json([
-            'user' => $user,
-            'historial_compras' => $pedidos
+            'user'             => $user,
+            'historial_compras' => [],
         ]);
     }
 }

@@ -21,9 +21,9 @@ class AuthController extends Controller
             
             return response()->json([
                 'mensaje' => 'Bienvenido al panel',
-                'token' => $token,
+                'token'   => $token,
                 'usuario' => $user->name,
-                'rol' => $user->rol,
+                'role'    => $user->role,   // campo renombrado: rol → role
             ]);
         }
 

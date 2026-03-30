@@ -16,10 +16,9 @@ import MiCuenta from './pages/MiCuenta';
 // ==========================================
 function RutaProtegida({ children }) {
   const token = localStorage.getItem('token_istore');
-  const rol = localStorage.getItem('rol_istore'); // El guardia busca el Gafete VIP
+  const role = localStorage.getItem('role_istore');
 
-  // Si tiene token Y ADEMÁS su rol es 'admin', lo dejamos pasar al panel.
-  if (token && rol === 'admin') {
+  if (token && role === 'admin') {
     return children; 
   } 
   

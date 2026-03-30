@@ -23,13 +23,13 @@ export default function Login() {
         // 🌟 ¡ÉXITO! Guardamos la pulsera VIP (Token) en el navegador
         localStorage.setItem('token_istore', data.token);
         localStorage.setItem('usuario_istore', data.usuario);
-        localStorage.setItem('rol_istore', data.rol);
+        localStorage.setItem('role_istore', data.role);
         
         Swal.fire({ title: `¡Bienvenido ${data.usuario}!`, icon: 'success', timer: 1500, showConfirmButton: false });
-        if (data.rol === 'admin') {
-        navigate('/admin');
-      } else {
-            navigate('/mi-cuenta');
+        if (data.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/mi-cuenta');
         }
       } else {
         Swal.fire('Acceso Denegado', data.error || 'Credenciales incorrectas', 'error');
