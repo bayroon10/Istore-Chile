@@ -75,10 +75,62 @@ export default function Inventario() {
     setEditandoId(p.id);
   };
 
+  // 🌟 FUNCIÓN PARA DESCARGAR EL EXCEL
+  const descargarExcel = async () => {
+    try {
+      // Usamos la misma base de tu API_URL, pero apuntando a la ruta de reportes
+      const urlExcel = 'https://istore-backend-nxvt.onrender.com/api/reports/products';
+      
+      const response = await fetch(urlExcel, {
+        method: 'GET',
+        headers: { 
+          'Authorization': `Bearer ${token}` // Usamos la pulsera VIP que ya tienes definida
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar el reporte');
+      }
+
+      // Convertimos la respuesta en un archivo binario (Blob)
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Inventario_iStore.xlsx');
+      
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      
+      Swal.fire('¡Listo!', 'El Excel se descargó correctamente', 'success');
+
+    } catch (error) {
+      console.error("Error al descargar:", error);
+      Swal.fire('Error', 'No se pudo descargar el Excel', 'error');
+    }
+  };
+
   return (
     <div>
-      <h2 style={{ fontSize: '28px', marginBottom: '5px' }}>📦 Inventario</h2>
-      <p style={{ color: '#888', marginBottom: '30px' }}>Agrega, edita o elimina productos de tu tienda.</p>
+      {/* 🌟 AQUÍ CAMBIAMOS EL TÍTULO PARA AGREGAR EL BOTÓN */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <div>
+          <h2 style={{ fontSize: '28px', marginBottom: '5px' }}>📦 Inventario</h2>
+          <p style={{ color: '#888', margin: 0 }}>Agrega, edita o elimina productos de tu tienda.</p>
+        </div>
+        
+        <button 
+          onClick={descargarExcel}
+          style={{ background: '#34c759', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', gap: '8px', alignItems: 'center' }}
+        >
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+          </svg>
+          Descargar Excel
+        </button>
+      </div>
 
       <form onSubmit={guardarProducto} style={{ background: '#1d1d1f', padding: '25px', borderRadius: '16px', marginBottom: '30px', display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
         <input type="text" placeholder="Nombre" required value={formulario.nombre} onChange={e => setFormulario({...formulario, nombre: e.target.value})} style={{ flex: 1, minWidth: '200px', padding: '12px', borderRadius: '8px', border: 'none', background: '#2c2c2e', color: 'white', outline: 'none' }} />

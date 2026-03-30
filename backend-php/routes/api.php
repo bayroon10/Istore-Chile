@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\ClienteAuthController;
+use App\Http\Controllers\Api\ReportController;
 
 // 🌍 RUTAS PÚBLICAS (No necesitan Token)
 Route::get('/productos', [ProductoController::class, 'index']);
@@ -29,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     
     // Gestión del Dashboard y Pedidos
+    Route::get('/reports/products', [ReportController::class, 'exportProducts']);
     Route::get('/cliente/perfil', [ClienteAuthController::class, 'perfil']);
     Route::get('/estadisticas', [DashboardController::class, 'index']);
     Route::get('/pedidos', [PedidoController::class, 'index']); 
