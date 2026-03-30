@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
 use Exception;
@@ -26,7 +27,7 @@ class PedidoController extends Controller
         // 💳 FASE 1: PROCESAR EL PAGO CON STRIPE
         // ========================================================
         try {
-            Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
+            Stripe::setApiKey(config('services.stripe.secret'));
 
             $pago = PaymentIntent::create([
                 'amount' => (int) $request->total,
@@ -43,18 +44,40 @@ class PedidoController extends Controller
         }
 
         // ========================================================
-        // 📦 FASE 2: GUARDAR PEDIDO Y STOCK
+        // 📦 FASE 2: GUARDAR PEDIDO Y DESCONTAR STOCK (ATÓMICO)
         // ========================================================
-        $pedido = Pedido::create($request->all());
+        // Usamos una transacción para garantizar que:
+        //   - Si el stock es insuficiente, NO se crea el pedido
+        //   - Si dos clientes compran al mismo tiempo, uno espera al otro
+        //   - Si algo falla, TODO se revierte (rollback automático)
+        try {
+            $pedido = DB::transaction(function () use ($request) {
+                $pedido = Pedido::create($request->all());
 
-        if (isset($request->carrito) && is_array($request->carrito)) {
-            foreach ($request->carrito as $item) {
-                $producto = Producto::find($item['id']);
-                if ($producto) {
-                    $producto->stock_actual -= $item['cantidad'];
-                    $producto->save();
+                if (isset($request->carrito) && is_array($request->carrito)) {
+                    foreach ($request->carrito as $item) {
+                        // lockForUpdate() bloquea la fila en PostgreSQL hasta que termine la transacción
+                        // Esto impide que otro request lea el stock mientras lo estamos modificando
+                        $producto = Producto::lockForUpdate()->find($item['id']);
+
+                        if (!$producto) {
+                            throw new Exception("Producto con ID {$item['id']} no encontrado.");
+                        }
+
+                        if ($producto->stock_actual < $item['cantidad']) {
+                            throw new Exception("Stock insuficiente para '{$producto->nombre}'. Disponible: {$producto->stock_actual}, solicitado: {$item['cantidad']}.");
+                        }
+
+                        // decrement() ejecuta UPDATE ... SET stock_actual = stock_actual - N
+                        // Es una operación atómica a nivel de SQL
+                        $producto->decrement('stock_actual', $item['cantidad']);
+                    }
                 }
-            }
+
+                return $pedido;
+            });
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
         }
 
         // ========================================================
