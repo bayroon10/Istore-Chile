@@ -13,7 +13,12 @@ export default function AdminLayout() {
         
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '20px', alignItems: 'center' }}>
           <Link to="/" style={{ color: '#ff9500', textDecoration: 'none', fontWeight: 'bold' }}>Ir a la Tienda ➔</Link>
-          <button onClick={() => { localStorage.removeItem('token_istore'); window.location.href = '/login'; }} style={{ background: 'transparent', border: '1px solid #ff3b30', color: '#ff3b30', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
+          <button onClick={() => { 
+              localStorage.removeItem('token_istore'); 
+              localStorage.removeItem('role_istore'); 
+              localStorage.removeItem('usuario_istore'); 
+              window.location.href = '/acceso-secreto-bairon'; 
+            }} style={{ background: 'transparent', border: '1px solid #ff3b30', color: '#ff3b30', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
             Salir
           </button>
         </div>

@@ -21,7 +21,7 @@ class EnsureUserIsAdmin
     {
         // Si el usuario no existe (no debería pasar si auth:sanctum está antes)
         // o si su rol no es 'admin', bloqueamos con 403
-        if (!$request->user() || $request->user()->rol !== 'admin') {
+        if (!$request->user() || !$request->user()->isAdmin()) {
             return response()->json([
                 'message' => 'Acceso denegado. Se requiere rol de administrador.',
             ], 403);
