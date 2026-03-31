@@ -8,8 +8,9 @@
  * - Content-Type: application/json
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://istore-backend-nxvt.onrender.com/api';
-
+const API_BASE = import.meta.env.PROD 
+  ? 'https://istore-backend-nxvt.onrender.com/api' 
+  : 'http://localhost:8000/api';
 // -------------------------------------------------------
 // Session ID para guest carts
 // -------------------------------------------------------
