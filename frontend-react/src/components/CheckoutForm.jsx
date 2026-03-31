@@ -37,40 +37,57 @@ export default function CheckoutForm({ total = 0, cerrarModal, onSuccess }) {
 
     setCargando(true);
 
-    // 1. Crear PaymentMethod con Stripe
-    const cardElement = elements.getElement(CardElement);
-    const { error, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    });
-
-    if (error) {
-      Swal.fire('Error en la tarjeta', error.message, 'error');
-      setCargando(false);
-      return;
-    }
-
-    // 2. Enviar al nuevo endpoint de checkout
     try {
-      const data = await api.post('/orders/checkout', {
+      // 1. Crear la Orden (Estado inicial: pending) y obtener client_secret
+      const payload = {
         ...datosEnvio,
         shipping_cost: datosEnvio.shipping_method === 'Retiro en Tienda' ? 0 : 3990,
-        stripe_payment_id: paymentMethod.id,
+      };
+
+      const response = await api.post('/orders/checkout', payload);
+      const { client_secret, data: order } = response;
+
+      if (!client_secret) {
+        throw new Error('No se pudo generar el secreto de pago de Stripe.');
+      }
+
+      // 2. Confirmar el pago con Stripe
+      const cardElement = elements.getElement(CardElement);
+      const { error, paymentIntent } = await stripe.confirmCardPayment(client_secret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: datosEnvio.shipping_name,
+            phone: datosEnvio.shipping_phone,
+          },
+        },
       });
 
-      Swal.fire({
-        title: '¡Pago Exitoso!',
-        html: `
-          <p>Tu orden <strong>${data.data.order_number}</strong> ha sido creada.</p>
-          <p style="color: #86868b; font-size: 14px;">Recibirás un correo con los detalles.</p>
-        `,
-        icon: 'success',
-        confirmButtonColor: '#0071e3'
-      });
+      if (error) {
+        Swal.fire('Error en el pago', error.message, 'error');
+        setCargando(false);
+        return;
+      }
 
-      if (onSuccess) onSuccess();
+      if (paymentIntent.status === 'succeeded') {
+        Swal.fire({
+          title: '¡Pago Exitoso!',
+          html: `
+            <p>Tu orden <strong>#${order.order_number}</strong> ha sido confirmada.</p>
+            <p style="color: #86868b; font-size: 14px;">El total fue de $${(total + payload.shipping_cost).toLocaleString('es-CL')}</p>
+          `,
+          icon: 'success',
+          confirmButtonColor: '#0071e3'
+        });
+
+        if (onSuccess) onSuccess();
+      } else {
+        Swal.fire('Atención', 'El pago está en proceso de verificación.', 'info');
+      }
+
     } catch (err) {
-      Swal.fire('Error', err.message || 'Hubo un problema con el pago.', 'error');
+      console.error('Error en checkout:', err);
+      Swal.fire('Error', err.message || 'Hubo un problema con tu pedido.', 'error');
     }
 
     setCargando(false);
