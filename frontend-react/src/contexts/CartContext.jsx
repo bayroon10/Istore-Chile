@@ -18,7 +18,7 @@ export function CartProvider({ children }) {
       const data = await api.get('/cart');
       setCart(data.data);
     } catch (err) {
-      console.error('Error cargando carrito:', err);
+      // Error manejado para producción
       setCart({ items: [], total_items: 0, total_price: 0 });
     } finally {
       setLoading(false);
