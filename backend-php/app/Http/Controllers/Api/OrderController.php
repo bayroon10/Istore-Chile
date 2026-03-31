@@ -49,20 +49,19 @@ class OrderController extends Controller
             'shipping_cost'     => 'integer|min:0',
             'discount'          => 'integer|min:0',
             'notes'             => 'nullable|string|max:1000',
-            'stripe_payment_id' => 'nullable|string',
         ]);
 
         try {
-            $order = $this->orderService->createOrderFromCart(
+            $result = $this->orderService->createOrderFromCart(
                 user: $request->user(),
                 shippingData: $validated,
                 paymentMethod: 'stripe',
-                stripePaymentId: $validated['stripe_payment_id'] ?? null,
             );
 
             return response()->json([
-                'message' => 'Orden creada exitosamente.',
-                'data'    => new OrderResource($order),
+                'message'       => 'Orden creada exitosamente.',
+                'client_secret' => $result['client_secret'],
+                'data'          => new OrderResource($result['order']),
             ], 201);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);

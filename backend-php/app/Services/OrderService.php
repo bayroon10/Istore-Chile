@@ -12,6 +12,10 @@ use Exception;
 
 class OrderService
 {
+    public function __construct(
+        private StripeService $stripeService,
+    ) {}
+
     /**
      * Crea una orden a partir del carrito del usuario.
      *
@@ -37,8 +41,7 @@ class OrderService
         User $user,
         array $shippingData,
         string $paymentMethod = 'stripe',
-        ?string $stripePaymentId = null,
-    ): Order {
+    ): array {
         // Obtener el carrito del usuario con sus ítems
         $cart = Cart::where('user_id', $user->id)->first();
 
@@ -46,7 +49,7 @@ class OrderService
             throw new Exception('El carrito está vacío. Agrega productos antes de hacer checkout.');
         }
 
-        return DB::transaction(function () use ($cart, $user, $shippingData, $paymentMethod, $stripePaymentId) {
+        return DB::transaction(function () use ($cart, $user, $shippingData, $paymentMethod) {
 
             $subtotal = 0;
             $orderItems = [];
@@ -106,16 +109,23 @@ class OrderService
                 'shipping_city'    => $shippingData['shipping_city'],
                 'shipping_region'  => $shippingData['shipping_region'],
                 'shipping_method'  => $shippingData['shipping_method'],
-                'status'           => $stripePaymentId ? 'paid' : 'pending',
+                'status'           => 'pending',
                 'subtotal'         => $subtotal,
                 'shipping_cost'    => $shippingCost,
                 'discount'         => $discount,
                 'total'            => $total,
                 'payment_method'   => $paymentMethod,
-                'stripe_payment_id' => $stripePaymentId,
                 'notes'            => $shippingData['notes'] ?? null,
-                'paid_at'          => $stripePaymentId ? now() : null,
+                'paid_at'          => null,
             ]);
+
+            // -------------------------------------------------------
+            // Paso 4: Generar el PaymentIntent de Stripe
+            // -------------------------------------------------------
+            $clientSecret = null;
+            if ($paymentMethod === 'stripe') {
+                $clientSecret = $this->stripeService->createPaymentIntent($order);
+            }
 
             // -------------------------------------------------------
             // Paso 4: Crear order items + descontar stock
@@ -138,10 +148,10 @@ class OrderService
             // -------------------------------------------------------
             $cart->items()->delete();
 
-            // Cargar relaciones antes de devolver
-            $order->load(['items', 'user']);
-
-            return $order;
+            return [
+                'order'         => $order,
+                'client_secret' => $clientSecret,
+            ];
         });
     }
 
