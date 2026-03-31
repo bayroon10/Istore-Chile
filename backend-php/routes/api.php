@@ -4,14 +4,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\WebhookController;
-use App\Http\Controllers\ChatbotController;
-use App\Http\Controllers\ClienteAuthController;
+use App\Http\Controllers\WebhookController as LegacyWebhookController; // Only temporarily until we delete the file
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\ClienteAuthController;
 
 // =============================================
 // 🌍 RUTAS PÚBLICAS (No necesitan Token)
@@ -21,7 +22,7 @@ Route::get('/products/{idOrSlug}', [ProductController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
 
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/webhook', [WebhookController::class, 'procesarWebhook']);
+Route::post('/webhooks/stripe', [WebhookController::class, 'handle']);
 Route::post('/chatbot', [ChatbotController::class, 'chat']);
 Route::post('/cliente/registro', [ClienteAuthController::class, 'registro']);
 Route::post('/cliente/login', [ClienteAuthController::class, 'login']);
