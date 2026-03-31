@@ -29,6 +29,7 @@ return [
         'Authorization',
         'Accept',
         'Origin',
+        'X-Session-Id',
     ],
 
     'exposed_headers' => ['Content-Disposition'],
