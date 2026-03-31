@@ -28,4 +28,4 @@ RUN composer install --optimize-autoloader --no-dev
 EXPOSE 10000
 
 # 8. Encendemos el servidor
-CMD php artisan migrate:fresh --seed --force && php artisan serve --host=0.0.0.0 --port=$PORT
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
