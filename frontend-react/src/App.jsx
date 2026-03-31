@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
 
 import Tienda from './pages/Tienda'
 import Login from './pages/login' 
@@ -6,23 +7,27 @@ import Inventario from './pages/Inventario'
 import Dashboard from './pages/Dashboard'
 import Pedidos from './pages/Pedidos'
 import AdminLayout from './layouts/AdminLayout'
-import MiCuenta from './pages/MiCuenta';
+import MiCuenta from './pages/MiCuenta'
 
 // ==========================================
-// 🛡️ EL NUEVO GUARDIA DE SEGURIDAD REAL
-// ==========================================
-// ==========================================
-// 🛡️ EL GUARDIA DE SEGURIDAD (SOLO ADMINS)
+// 🛡️ GUARDIA DE SEGURIDAD (SOLO ADMINS)
 // ==========================================
 function RutaProtegida({ children }) {
-  const token = localStorage.getItem('token_istore');
-  const role = localStorage.getItem('role_istore');
+  const { isAdmin, loading } = useAuth();
 
-  if (token && role === 'admin') {
+  // Mientras carga la autenticación, mostramos un loader
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#000', color: 'white', fontSize: '18px' }}>
+        Cargando...
+      </div>
+    );
+  }
+
+  if (isAdmin) {
     return children; 
-  } 
+  }
   
-  // Si no es admin (o no está logueado), lo mandamos a su cuenta normal o al login.
   return <Navigate to="/mi-cuenta" />; 
 }
 
@@ -32,9 +37,10 @@ export default function App() {
       <Routes>
         {/* RUTAS PÚBLICAS */}
         <Route path="/" element={<Tienda />} />
-        <Route path="/tienda" element={<Tienda />} />  {/* Agregamos esta por si acaso */}  
-        <Route path="/mi-cuenta" element={<MiCuenta />} />  
-<Route path="/acceso-secreto-bairon" element={<Login />} />        
+        <Route path="/tienda" element={<Tienda />} />
+        <Route path="/mi-cuenta" element={<MiCuenta />} />
+        <Route path="/acceso-secreto-bairon" element={<Login />} />
+        
         {/* RUTAS PRIVADAS (ADMIN) */}
         <Route path="/admin" element={
           <RutaProtegida>

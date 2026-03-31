@@ -1,46 +1,35 @@
 import { useState, useEffect } from 'react';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import Swal from 'sweetalert2';
+import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
+import api from '../lib/api';
 
-
-// ✅ FIX 1: Agregamos "= 0" como valor por defecto en la firma
-export default function CheckoutForm({ carrito, total = 0, cerrarModal, vaciarCarrito }) {
+export default function CheckoutForm({ total = 0, cerrarModal, onSuccess }) {
   const stripe = useStripe();
   const elements = useElements();
   const [cargando, setCargando] = useState(false);
+  const { user } = useAuth();
 
-
-  const [datosCliente, setDatosCliente] = useState({
-    nombre: '',
-    email: '',
-    telefono: '',
-    direccion: '',
-    metodo_envio: 'Starken'
+  const [datosEnvio, setDatosEnvio] = useState({
+    shipping_name: '',
+    shipping_phone: '',
+    shipping_street: '',
+    shipping_city: 'Santiago',
+    shipping_region: 'Región Metropolitana',
+    shipping_method: 'Starken',
   });
 
-
+  // Pre-rellenar con los datos del usuario autenticado
   useEffect(() => {
-    const token = localStorage.getItem('cliente_token');
-    if (token) {
-      fetch('https://istore-backend-nxvt.onrender.com/api/cliente/perfil', {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Token inválido");
-        return res.json();
-      })
-      .then(data => {
-        if (data.user) {
-          setDatosCliente(prev => ({ ...prev, nombre: data.user.name, email: data.user.email }));
-        }
-      })
-      .catch(err => console.log("Usuario no logueado o token expirado."));
+    if (user) {
+      setDatosEnvio(prev => ({
+        ...prev,
+        shipping_name: user.name || '',
+        shipping_phone: user.phone || '',
+      }));
     }
-  }, []);
-
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,6 +37,7 @@ export default function CheckoutForm({ carrito, total = 0, cerrarModal, vaciarCa
 
     setCargando(true);
 
+    // 1. Crear PaymentMethod con Stripe
     const cardElement = elements.getElement(CardElement);
     const { error, paymentMethod } = await stripe.createPaymentMethod({
       type: 'card',
@@ -60,59 +50,48 @@ export default function CheckoutForm({ carrito, total = 0, cerrarModal, vaciarCa
       return;
     }
 
+    // 2. Enviar al nuevo endpoint de checkout
     try {
-      const response = await fetch('https://istore-backend-nxvt.onrender.com/api/pedidos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          cliente_nombre: datosCliente.nombre,
-          cliente_email: datosCliente.email,
-          cliente_telefono: datosCliente.telefono,
-          direccion: datosCliente.direccion,
-          metodo_envio: datosCliente.metodo_envio,
-          total: total,
-          carrito: carrito,
-          stripe_token: paymentMethod.id
-        })
+      const data = await api.post('/orders/checkout', {
+        ...datosEnvio,
+        shipping_cost: datosEnvio.shipping_method === 'Retiro en Tienda' ? 0 : 3990,
+        stripe_payment_id: paymentMethod.id,
       });
 
-      const data = await response.json();
+      Swal.fire({
+        title: '¡Pago Exitoso!',
+        html: `
+          <p>Tu orden <strong>${data.data.order_number}</strong> ha sido creada.</p>
+          <p style="color: #86868b; font-size: 14px;">Recibirás un correo con los detalles.</p>
+        `,
+        icon: 'success',
+        confirmButtonColor: '#0071e3'
+      });
 
-      if (response.ok) {
-        Swal.fire({
-          title: '¡Pago Exitoso!',
-          text: 'Tu boleta ha sido generada y enviada a tu correo.',
-          icon: 'success',
-          confirmButtonColor: '#0071e3'
-        });
-        vaciarCarrito();
-        cerrarModal();
-      } else {
-        Swal.fire('Error', data.error || 'Hubo un problema con el pago.', 'error');
-      }
-    } catch (error) {
-      Swal.fire('Error de Conexión', 'No se pudo contactar al servidor.', 'error');
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      Swal.fire('Error', err.message || 'Hubo un problema con el pago.', 'error');
     }
 
     setCargando(false);
   };
 
-
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
       
-      <input type="text" placeholder="Nombre completo" required value={datosCliente.nombre} onChange={e => setDatosCliente({...datosCliente, nombre: e.target.value})} style={inputStyle} />
-      <input type="email" placeholder="Correo electrónico" required value={datosCliente.email} onChange={e => setDatosCliente({...datosCliente, email: e.target.value})} style={inputStyle} />
-      <input type="tel" placeholder="Teléfono" required value={datosCliente.telefono} onChange={e => setDatosCliente({...datosCliente, telefono: e.target.value})} style={inputStyle} />
-      <input type="text" placeholder="Dirección de envío" required value={datosCliente.direccion} onChange={e => setDatosCliente({...datosCliente, direccion: e.target.value})} style={inputStyle} />
+      <input type="text" placeholder="Nombre completo" required value={datosEnvio.shipping_name} onChange={e => setDatosEnvio({...datosEnvio, shipping_name: e.target.value})} style={inputStyle} />
+      <input type="tel" placeholder="Teléfono" required value={datosEnvio.shipping_phone} onChange={e => setDatosEnvio({...datosEnvio, shipping_phone: e.target.value})} style={inputStyle} />
+      <input type="text" placeholder="Dirección de envío" required value={datosEnvio.shipping_street} onChange={e => setDatosEnvio({...datosEnvio, shipping_street: e.target.value})} style={inputStyle} />
       
-      <select value={datosCliente.metodo_envio} onChange={e => setDatosCliente({...datosCliente, metodo_envio: e.target.value})} style={inputStyle}>
-        <option value="Starken">Envío por Starken</option>
-        <option value="Chilexpress">Envío por Chilexpress</option>
-        <option value="Retiro en Tienda">Retiro en Tienda</option>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <input type="text" placeholder="Ciudad" required value={datosEnvio.shipping_city} onChange={e => setDatosEnvio({...datosEnvio, shipping_city: e.target.value})} style={{ ...inputStyle, flex: 1 }} />
+        <input type="text" placeholder="Región" required value={datosEnvio.shipping_region} onChange={e => setDatosEnvio({...datosEnvio, shipping_region: e.target.value})} style={{ ...inputStyle, flex: 1 }} />
+      </div>
+
+      <select value={datosEnvio.shipping_method} onChange={e => setDatosEnvio({...datosEnvio, shipping_method: e.target.value})} style={inputStyle}>
+        <option value="Starken">Envío por Starken ($3.990)</option>
+        <option value="Chilexpress">Envío por Chilexpress ($3.990)</option>
+        <option value="Retiro en Tienda">Retiro en Tienda (Gratis)</option>
       </select>
 
       <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '10px', background: 'white', marginTop: '10px' }}>
@@ -120,13 +99,17 @@ export default function CheckoutForm({ carrito, total = 0, cerrarModal, vaciarCa
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px', alignItems: 'center' }}>
-        {/* ✅ FIX 2: Doble seguro con (total ?? 0) antes del .toLocaleString() */}
-        <h3 style={{ margin: 0 }}>Total: ${(total ?? 0).toLocaleString('es-CL')}</h3>
+        <div>
+          <h3 style={{ margin: 0 }}>Total: ${(total ?? 0).toLocaleString('es-CL')}</h3>
+          {datosEnvio.shipping_method !== 'Retiro en Tienda' && (
+            <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#86868b' }}>+ $3.990 envío</p>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button type="button" onClick={cerrarModal} style={{ padding: '12px 20px', borderRadius: '10px', border: 'none', background: '#e5e5ea', cursor: 'pointer', fontWeight: 'bold' }}>
             Cancelar
           </button>
-          <button type="submit" disabled={!stripe || cargando} style={{ padding: '12px 20px', borderRadius: '10px', border: 'none', background: '#0071e3', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>
+          <button type="submit" disabled={!stripe || cargando} style={{ padding: '12px 20px', borderRadius: '10px', border: 'none', background: cargando ? '#999' : '#0071e3', color: 'white', cursor: cargando ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>
             {cargando ? 'Procesando...' : 'Pagar Ahora'}
           </button>
         </div>

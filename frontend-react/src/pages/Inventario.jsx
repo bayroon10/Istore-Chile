@@ -1,123 +1,159 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import api from '../lib/api';
 
 export default function Inventario() {
   const [productos, setProductos] = useState([]);
-  const [formulario, setFormulario] = useState({ nombre: '', categoria: '', precio: '', stock_actual: '' });
+  const [categorias, setCategorias] = useState([]);
+  const [formulario, setFormulario] = useState({ name: '', category_id: '', price: '', stock: '', description: '' });
   const [imagenActual, setImagenActual] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const API_URL = 'https://istore-backend-nxvt.onrender.com/api/productos';
-  
-  // 🌟 AQUÍ ESTÁ LA PULSERA VIP
-  const token = localStorage.getItem('token_istore'); 
-
-  const cargarProductos = () => {
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => setProductos(data));
+  const cargarDatos = async () => {
+    setLoading(true);
+    try {
+      const [resProd, resCat] = await Promise.all([
+        api.get('/products'),
+        api.get('/categories')
+      ]);
+      setProductos(resProd.data || []);
+      setCategorias(resCat.data || []);
+    } catch (err) {
+      console.error('Error cargando datos:', err);
+      Swal.fire('Error', 'No se pudieron cargar los datos del inventario', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { cargarProductos() }, []);
+  useEffect(() => { cargarDatos() }, []);
 
   const guardarProducto = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append('nombre', formulario.nombre);
-    formData.append('categoria', formulario.categoria);
-    formData.append('precio', formulario.precio);
-    formData.append('stock_actual', formulario.stock_actual);
-    if (imagenActual) { formData.append('imagen', imagenActual); }
-    if (editandoId) { formData.append('_method', 'PUT'); }
+    formData.append('name', formulario.name);
+    formData.append('category_id', formulario.category_id);
+    formData.append('price', formulario.price);
+    formData.append('stock', formulario.stock);
+    formData.append('description', formulario.description);
+    
+    if (imagenActual) { 
+      formData.append('image', imagenActual); 
+    }
+    
+    if (editandoId) { 
+      formData.append('_method', 'PUT'); 
+    }
 
-    const url = editandoId ? `${API_URL}/${editandoId}` : API_URL;
+    const url = editandoId ? `/products/${editandoId}` : '/products';
 
     try {
-      const response = await fetch(url, {
+      // Usamos fetch directo para Multipart/Form-Data con el helper de token
+      const token = api.getToken();
+      const response = await fetch(`${api.API_BASE}${url}`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }, // 🌟 MOSTRAMOS LA PULSERA
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
         body: formData,
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         Swal.fire('¡Éxito!', 'Producto guardado correctamente', 'success');
-        setFormulario({ nombre: '', categoria: '', precio: '', stock_actual: '' });
-        setImagenActual(null);
-        setEditandoId(null);
-        document.getElementById('fileInput').value = "";
-        cargarProductos();
+        resetFormulario();
+        cargarDatos();
       } else {
-        Swal.fire('Error', 'No se pudo guardar el producto', 'error');
+        Swal.fire('Error', data.message || 'No se pudo guardar el producto', 'error');
       }
     } catch (error) {
       Swal.fire('Error de Conexión', 'No se pudo contactar al servidor', 'error');
     }
   };
 
+  const resetFormulario = () => {
+    setFormulario({ name: '', category_id: '', price: '', stock: '', description: '' });
+    setImagenActual(null);
+    setEditandoId(null);
+    if (document.getElementById('fileInput')) {
+      document.getElementById('fileInput').value = "";
+    }
+  }
+
   const eliminarProducto = (id) => {
     Swal.fire({
-      title: '¿Estás seguro?', text: "¡No podrás revertir esto!", icon: 'warning',
-      showCancelButton: true, confirmButtonColor: '#ff3b30', cancelButtonColor: '#333', confirmButtonText: 'Sí, borrar', cancelButtonText: 'Cancelar'
+      title: '¿Estás seguro?', 
+      text: "¡No podrás revertir esto!", 
+      icon: 'warning',
+      showCancelButton: true, 
+      confirmButtonColor: '#ff3b30', 
+      cancelButtonColor: '#333', 
+      confirmButtonText: 'Sí, borrar', 
+      cancelButtonText: 'Cancelar'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await fetch(`${API_URL}/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` } // 🌟 MOSTRAMOS LA PULSERA AL BORRAR
-        });
-        Swal.fire('¡Borrado!', 'El producto ha sido eliminado.', 'success');
-        cargarProductos();
+        try {
+          await api.delete(`/products/${id}`);
+          Swal.fire('¡Borrado!', 'El producto ha sido eliminado.', 'success');
+          cargarDatos();
+        } catch (err) {
+          Swal.fire('Error', err.message, 'error');
+        }
       }
     });
   };
 
   const editarProducto = (p) => {
-    setFormulario({ nombre: p.nombre, categoria: p.categoria, precio: p.precio, stock_actual: p.stock_actual });
+    setFormulario({ 
+      name: p.name, 
+      category_id: p.category?.id || '', 
+      price: p.price, 
+      stock: p.stock,
+      description: p.description || ''
+    });
     setEditandoId(p.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 🌟 FUNCIÓN PARA DESCARGAR EL EXCEL
   const descargarExcel = async () => {
     try {
-      // Usamos la misma base de tu API_URL, pero apuntando a la ruta de reportes
-      const urlExcel = 'https://istore-backend-nxvt.onrender.com/api/reports/products';
-      
-      const response = await fetch(urlExcel, {
+      const response = await fetch(`${api.API_BASE}/reports/products`, {
         method: 'GET',
         headers: { 
-          'Authorization': `Bearer ${token}` // Usamos la pulsera VIP que ya tienes definida
+          'Authorization': `Bearer ${api.getToken()}`
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Error al generar el reporte');
-      }
+      if (!response.ok) throw new Error('Error al generar el reporte');
 
-      // Convertimos la respuesta en un archivo binario (Blob)
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'Inventario_iStore.xlsx');
-      
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
       
       Swal.fire('¡Listo!', 'El Excel se descargó correctamente', 'success');
-
     } catch (error) {
-      console.error("Error al descargar:", error);
       Swal.fire('Error', 'No se pudo descargar el Excel', 'error');
     }
   };
 
+  if (loading) {
+    return <div style={{ color: 'white', textAlign: 'center', padding: '100px' }}>Cargando inventario...</div>
+  }
+
   return (
     <div>
-      {/* 🌟 AQUÍ CAMBIAMOS EL TÍTULO PARA AGREGAR EL BOTÓN */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <div>
           <h2 style={{ fontSize: '28px', marginBottom: '5px' }}>📦 Inventario</h2>
-          <p style={{ color: '#888', margin: 0 }}>Agrega, edita o elimina productos de tu tienda.</p>
+          <p style={{ color: '#888', margin: 0 }}>Gestiona los productos del marketplace.</p>
         </div>
         
         <button 
@@ -133,16 +169,23 @@ export default function Inventario() {
       </div>
 
       <form onSubmit={guardarProducto} style={{ background: '#1d1d1f', padding: '25px', borderRadius: '16px', marginBottom: '30px', display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-        <input type="text" placeholder="Nombre" required value={formulario.nombre} onChange={e => setFormulario({...formulario, nombre: e.target.value})} style={{ flex: 1, minWidth: '200px', padding: '12px', borderRadius: '8px', border: 'none', background: '#2c2c2e', color: 'white', outline: 'none' }} />
-        <input type="text" placeholder="Categoría" required value={formulario.categoria} onChange={e => setFormulario({...formulario, categoria: e.target.value})} style={{ flex: 1, minWidth: '150px', padding: '12px', borderRadius: '8px', border: 'none', background: '#2c2c2e', color: 'white', outline: 'none' }} />
-        <input type="number" placeholder="Precio" required value={formulario.precio} onChange={e => setFormulario({...formulario, precio: e.target.value})} style={{ width: '120px', padding: '12px', borderRadius: '8px', border: 'none', background: '#2c2c2e', color: 'white', outline: 'none' }} />
-        <input type="number" placeholder="Stock" required value={formulario.stock_actual} onChange={e => setFormulario({...formulario, stock_actual: e.target.value})} style={{ width: '100px', padding: '12px', borderRadius: '8px', border: 'none', background: '#2c2c2e', color: 'white', outline: 'none' }} />
+        <input type="text" placeholder="Nombre" required value={formulario.name} onChange={e => setFormulario({...formulario, name: e.target.value})} style={inputStyle} />
+        
+        <select required value={formulario.category_id} onChange={e => setFormulario({...formulario, category_id: e.target.value})} style={inputStyle}>
+            <option value="">Selecciona Categoría</option>
+            {categorias.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+        </select>
+
+        <input type="number" placeholder="Precio" required value={formulario.price} onChange={e => setFormulario({...formulario, price: e.target.value})} style={{ ...inputStyle, width: '120px' }} />
+        <input type="number" placeholder="Stock" required value={formulario.stock} onChange={e => setFormulario({...formulario, stock: e.target.value})} style={{ ...inputStyle, width: '100px' }} />
         <input type="file" id="fileInput" onChange={e => setImagenActual(e.target.files[0])} style={{ padding: '10px', color: '#888' }} />
         
         <button type="submit" style={{ background: '#0071e3', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
           {editandoId ? 'Actualizar' : 'Guardar'}
         </button>
-        {editandoId && <button type="button" onClick={() => {setEditandoId(null); setFormulario({nombre:'', categoria:'', precio:'', stock_actual:''})}} style={{ background: '#444', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>}
+        {editandoId && <button type="button" onClick={resetFormulario} style={{ background: '#444', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>}
       </form>
 
       <div style={{ background: '#1d1d1f', borderRadius: '16px', overflow: 'hidden' }}>
@@ -159,10 +202,12 @@ export default function Inventario() {
           <tbody>
             {productos.map(p => (
               <tr key={p.id} style={{ borderBottom: '1px solid #333' }}>
-                <td style={{ padding: '15px' }}><img src={p.imagen ? `https://istore-backend-nxvt.onrender.com/storage/${p.imagen}` : 'https://via.placeholder.com/50'} alt="img" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px', background: 'white' }}/></td>
-                <td style={{ padding: '15px' }}><b>{p.nombre}</b><br/><small style={{color:'#888'}}>{p.categoria}</small></td>
-                <td style={{ padding: '15px' }}>${p.precio}</td>
-                <td style={{ padding: '15px' }}>{p.stock_actual}</td>
+                <td style={{ padding: '15px' }}>
+                    <img src={p.primary_image_url || 'https://via.placeholder.com/50'} alt={p.name} style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '8px', background: 'white' }}/>
+                </td>
+                <td style={{ padding: '15px' }}><b>{p.name}</b><br/><small style={{color:'#888'}}>{p.category?.name}</small></td>
+                <td style={{ padding: '15px' }}>${p.price.toLocaleString()}</td>
+                <td style={{ padding: '15px' }}>{p.stock}</td>
                 <td style={{ padding: '15px', textAlign: 'center', display: 'flex', gap: '10px', justifyContent: 'center' }}>
                   <button onClick={() => editarProducto(p)} style={{ background: '#ff9500', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}>Editar</button>
                   <button onClick={() => eliminarProducto(p.id)} style={{ background: '#ff3b30', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}>Borrar</button>
@@ -175,3 +220,14 @@ export default function Inventario() {
     </div>
   );
 }
+
+const inputStyle = {
+    flex: 1, 
+    minWidth: '150px', 
+    padding: '12px', 
+    borderRadius: '8px', 
+    border: 'none', 
+    background: '#2c2c2e', 
+    color: 'white', 
+    outline: 'none'
+};
