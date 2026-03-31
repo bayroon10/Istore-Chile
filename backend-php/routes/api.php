@@ -56,17 +56,3 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // Reportes
     Route::get('/reports/products', [ReportController::class, 'exportProducts']);
 });
-use Illuminate\Support\Facades\Artisan;
-
-// RUTA SECRETA TEMPORAL PARA RESETEAR LA BD EN PRODUCCIÓN
-Route::get('/reset-db-bairon-ninja', function () {
-    try {
-        Artisan::call('migrate:fresh', [
-            '--seed' => true,
-            '--force' => true
-        ]);
-        return response()->json(['mensaje' => '¡Base de datos reseteada y con seeders en producción, mano!']);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()]);
-    }
-});
