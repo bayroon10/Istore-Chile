@@ -1,145 +1,157 @@
-import { useState, useEffect } from 'react';
-import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
-import Swal from 'sweetalert2';
-import { useAuth } from '../contexts/AuthContext';
-import { useCart } from '../contexts/CartContext';
+import { useState } from 'react';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import api from '../lib/api';
+import Swal from 'sweetalert2';
 
-export default function CheckoutForm({ total = 0, cerrarModal, onSuccess }) {
+export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
   const stripe = useStripe();
   const elements = useElements();
   const [cargando, setCargando] = useState(false);
-  const { user } = useAuth();
 
-  const [datosEnvio, setDatosEnvio] = useState({
-    shipping_name: '',
-    shipping_phone: '',
-    shipping_street: '',
-    shipping_city: 'Santiago',
-    shipping_region: 'Región Metropolitana',
-    shipping_method: 'Starken',
+  // Datos del cliente
+  const [datos, setDatos] = useState({
+    nombre: '',
+    email: '',
+    direccion: '',
+    ciudad: ''
   });
 
-  // Pre-rellenar con los datos del usuario autenticado
-  useEffect(() => {
-    if (user) {
-      setDatosEnvio(prev => ({
-        ...prev,
-        shipping_name: user.name || '',
-        shipping_phone: user.phone || '',
-      }));
-    }
-  }, [user]);
+  const handleChange = (e) => {
+    setDatos({ ...datos, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!stripe || !elements) return;
 
     setCargando(true);
 
     try {
-      // 1. Crear la Orden (Estado inicial: pending) y obtener client_secret
-      const payload = {
-        ...datosEnvio,
-        shipping_cost: datosEnvio.shipping_method === 'Retiro en Tienda' ? 0 : 3990,
-      };
+      // 1. Crear Orden y obtener Client Secret de Stripe
+      const response = await api.post('/orders/checkout', {
+        shipping_name: datos.nombre,
+        shipping_email: datos.email,
+        shipping_street: datos.direccion,
+        shipping_city: datos.ciudad,
+        shipping_region: 'Metropolitana', // Default
+        shipping_phone: '999999999',     // Placeholder
+        shipping_method: 'Standard'
+      });
 
-      const response = await api.post('/orders/checkout', payload);
-      const { client_secret, data: order } = response;
+      const { client_secret, order_id } = response.data;
 
-      if (!client_secret) {
-        throw new Error('No se pudo generar el secreto de pago de Stripe.');
-      }
-
-      // 2. Confirmar el pago con Stripe
-      const cardElement = elements.getElement(CardElement);
-      const { error, paymentIntent } = await stripe.confirmCardPayment(client_secret, {
+      // 2. Confirmar pago con Stripe
+      const result = await stripe.confirmCardPayment(client_secret, {
         payment_method: {
-          card: cardElement,
+          card: elements.getElement(CardElement),
           billing_details: {
-            name: datosEnvio.shipping_name,
-            phone: datosEnvio.shipping_phone,
+            name: datos.nombre,
+            email: datos.email,
           },
         },
       });
 
-      if (error) {
-        Swal.fire('Error en el pago', error.message, 'error');
-        setCargando(false);
-        return;
-      }
-
-      if (paymentIntent.status === 'succeeded') {
+      if (result.error) {
         Swal.fire({
-          title: '¡Pago Exitoso!',
-          html: `
-            <p>Tu orden <strong>#${order.order_number}</strong> ha sido confirmada.</p>
-            <p style="color: #86868b; font-size: 14px;">El total fue de $${(total + payload.shipping_cost).toLocaleString('es-CL')}</p>
-          `,
-          icon: 'success',
+          title: 'Error en el pago',
+          text: result.error.message,
+          icon: 'error',
+          background: '#000',
+          color: '#fff',
           confirmButtonColor: '#0071e3'
         });
-
-        if (onSuccess) onSuccess();
       } else {
-        Swal.fire('Atención', 'El pago está en proceso de verificación.', 'info');
+        if (result.paymentIntent.status === 'succeeded') {
+          Swal.fire({
+            title: '¡Pago Exitoso!',
+            text: `Tu orden #${order_id} ha sido procesada. Recibirás un correo pronto.`,
+            icon: 'success',
+            background: '#000',
+            color: '#fff',
+            confirmButtonColor: '#0071e3'
+          });
+          onSuccess();
+        }
       }
-
-    } catch (err) {
-      console.error('Error en checkout:', err);
-      Swal.fire('Error', err.message || 'Hubo un problema con tu pedido.', 'error');
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: error.message || 'No se pudo procesar la orden',
+        icon: 'error',
+        background: '#000',
+        color: '#fff',
+        confirmButtonColor: '#0071e3'
+      });
+    } finally {
+      setCargando(false);
     }
-
-    setCargando(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-      
-      <input type="text" placeholder="Nombre completo" required value={datosEnvio.shipping_name} onChange={e => setDatosEnvio({...datosEnvio, shipping_name: e.target.value})} style={inputStyle} />
-      <input type="tel" placeholder="Teléfono" required value={datosEnvio.shipping_phone} onChange={e => setDatosEnvio({...datosEnvio, shipping_phone: e.target.value})} style={inputStyle} />
-      <input type="text" placeholder="Dirección de envío" required value={datosEnvio.shipping_street} onChange={e => setDatosEnvio({...datosEnvio, shipping_street: e.target.value})} style={inputStyle} />
-      
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <input type="text" placeholder="Ciudad" required value={datosEnvio.shipping_city} onChange={e => setDatosEnvio({...datosEnvio, shipping_city: e.target.value})} style={{ ...inputStyle, flex: 1 }} />
-        <input type="text" placeholder="Región" required value={datosEnvio.shipping_region} onChange={e => setDatosEnvio({...datosEnvio, shipping_region: e.target.value})} style={{ ...inputStyle, flex: 1 }} />
+    <form onSubmit={handleSubmit} className="space-y-6">
+
+      {/* SECCIÓN DE DATOS (CON FLOATING LABELS TECH) */}
+      <div className="grid grid-cols-1 gap-4">
+        {[
+          { label: 'Nombre Completo', name: 'nombre', type: 'text', placeholder: ' ' },
+          { label: 'Correo Electrónico', name: 'email', type: 'email', placeholder: ' ' },
+          { label: 'Dirección de Envío', name: 'direccion', type: 'text', placeholder: ' ' },
+          { label: 'Ciudad', name: 'ciudad', type: 'text', placeholder: ' ' }
+        ].map((field) => (
+          <div key={field.name} className="relative group">
+            <input
+              required
+              type={field.type}
+              name={field.name}
+              value={datos[field.name]}
+              onChange={handleChange}
+              placeholder={field.placeholder}
+              className="peer w-full h-14 bg-carbon-grey/40 border border-white/5 rounded-[1.2rem] px-5 pt-4 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all"
+            />
+            <label className="absolute left-5 top-4 text-gray-500 text-sm font-bold uppercase tracking-widest pointer-events-none transition-all duration-300 peer-focus:-top-1 peer-focus:left-4 peer-focus:text-[10px] peer-focus:text-urban-blue peer-[:not(:placeholder-shown)]:-top-1 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-urban-blue">
+              {field.label}
+            </label>
+          </div>
+        ))}
       </div>
 
-      <select value={datosEnvio.shipping_method} onChange={e => setDatosEnvio({...datosEnvio, shipping_method: e.target.value})} style={inputStyle}>
-        <option value="Starken">Envío por Starken ($3.990)</option>
-        <option value="Chilexpress">Envío por Chilexpress ($3.990)</option>
-        <option value="Retiro en Tienda">Retiro en Tienda (Gratis)</option>
-      </select>
-
-      <div style={{ padding: '15px', border: '1px solid #ddd', borderRadius: '10px', background: 'white', marginTop: '10px' }}>
-        <CardElement options={{ style: { base: { fontSize: '16px', color: '#333', '::placeholder': { color: '#aaa' } } } }} />
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px', alignItems: 'center' }}>
-        <div>
-          <h3 style={{ margin: 0 }}>Total: ${(total ?? 0).toLocaleString('es-CL')}</h3>
-          {datosEnvio.shipping_method !== 'Retiro en Tienda' && (
-            <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#86868b' }}>+ $3.990 envío</p>
-          )}
+      {/* TARJETA STRIPE (URBAN STYLE) */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 pl-2">Información de Pago</p>
+        <div className="glass-dark p-6 rounded-[1.2rem] border border-white/5 group focus-within:border-urban-blue/30 transition-all">
+          <CardElement options={{
+            style: {
+              base: {
+                fontSize: '16px',
+                color: '#fff',
+                fontFamily: 'Inter, sans-serif',
+                '::placeholder': { color: '#666' },
+              },
+              invalid: { color: '#ef4444' },
+            },
+          }} />
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button type="button" onClick={cerrarModal} style={{ padding: '12px 20px', borderRadius: '10px', border: 'none', background: '#e5e5ea', cursor: 'pointer', fontWeight: 'bold' }}>
-            Cancelar
-          </button>
-          <button type="submit" disabled={!stripe || cargando} style={{ padding: '12px 20px', borderRadius: '10px', border: 'none', background: cargando ? '#999' : '#0071e3', color: 'white', cursor: cargando ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>
-            {cargando ? 'Procesando...' : 'Pagar Ahora'}
-          </button>
-        </div>
       </div>
-      
+
+      <div className="flex gap-3 pt-4">
+        <button
+          type="button"
+          onClick={cerrarModal}
+          className="flex-1 py-4 rounded-2xl bg-space-grey text-gray-400 font-black uppercase text-xs tracking-widest hover:text-white transition-all"
+        >
+          Cancelar
+        </button>
+        <button
+          disabled={!stripe || cargando}
+          className="flex-[2] py-4 rounded-2xl bg-urban-blue text-white font-black uppercase text-xs tracking-widest shadow-neon-blue hover:shadow-neon-glow transition-all disabled:opacity-50 disabled:grayscale"
+        >
+          {cargando ? 'PROCESANDO...' : `CONFIRMAR — $${total.toLocaleString()}`}
+        </button>
+      </div>
+
+      <p className="text-[10px] text-center text-gray-600 font-bold uppercase tracking-widest leading-relaxed">
+        🔒 Encriptación AES-256 de grado militar.<br />Certificado por Stripe & iStore .
+      </p>
     </form>
   );
 }
-
-const inputStyle = {
-  padding: '12px',
-  borderRadius: '10px',
-  border: '1px solid #ddd',
-  outline: 'none',
-  fontSize: '15px'
-};

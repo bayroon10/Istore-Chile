@@ -20,8 +20,14 @@ export default function Inventario() {
       setProductos(resProd.data || []);
       setCategorias(resCat.data || []);
     } catch (err) {
-      console.error('Error cargando datos:', err);
-      Swal.fire('Error', 'No se pudieron cargar los datos del inventario', 'error');
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudieron cargar los datos del inventario',
+        icon: 'error',
+        background: '#000',
+        color: '#fff',
+        confirmButtonColor: '#0071e3'
+      });
     } finally {
       setLoading(false);
     }
@@ -63,14 +69,35 @@ export default function Inventario() {
       const data = await response.json();
 
       if (response.ok) {
-        Swal.fire('¡Éxito!', 'Producto guardado correctamente', 'success');
+        Swal.fire({
+          title: '¡Éxito!',
+          text: 'Producto guardado correctamente',
+          icon: 'success',
+          background: '#000',
+          color: '#fff',
+          confirmButtonColor: '#0071e3'
+        });
         resetFormulario();
         cargarDatos();
       } else {
-        Swal.fire('Error', data.message || 'No se pudo guardar el producto', 'error');
+        Swal.fire({
+          title: 'Error',
+          text: data.message || 'No se pudo guardar el producto',
+          icon: 'error',
+          background: '#000',
+          color: '#fff',
+          confirmButtonColor: '#0071e3'
+        });
       }
     } catch (error) {
-      Swal.fire('Error de Conexión', 'No se pudo contactar al servidor', 'error');
+      Swal.fire({
+        title: 'Error de Conexión',
+        text: 'No se pudo contactar al servidor',
+        icon: 'error',
+        background: '#000',
+        color: '#fff',
+        confirmButtonColor: '#0071e3'
+      });
     }
   };
 
@@ -92,15 +119,31 @@ export default function Inventario() {
       confirmButtonColor: '#ff3b30', 
       cancelButtonColor: '#333', 
       confirmButtonText: 'Sí, borrar', 
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      background: '#000',
+      color: '#fff'
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           await api.delete(`/products/${id}`);
-          Swal.fire('¡Borrado!', 'El producto ha sido eliminado.', 'success');
+          Swal.fire({
+            title: '¡Borrado!',
+            text: 'El producto ha sido eliminado.',
+            icon: 'success',
+            background: '#000',
+            color: '#fff',
+            confirmButtonColor: '#0071e3'
+          });
           cargarDatos();
         } catch (err) {
-          Swal.fire('Error', err.message, 'error');
+          Swal.fire({
+            title: 'Error',
+            text: err.message,
+            icon: 'error',
+            background: '#000',
+            color: '#fff',
+            confirmButtonColor: '#0071e3'
+          });
         }
       }
     });
@@ -138,9 +181,23 @@ export default function Inventario() {
       link.click();
       link.parentNode.removeChild(link);
       
-      Swal.fire('¡Listo!', 'El Excel se descargó correctamente', 'success');
+      Swal.fire({
+        title: '¡Listo!',
+        text: 'El Excel se descargó correctamente',
+        icon: 'success',
+        background: '#000',
+        color: '#fff',
+        confirmButtonColor: '#0071e3'
+      });
     } catch (error) {
-      Swal.fire('Error', 'No se pudo descargar el Excel', 'error');
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo descargar el Excel',
+        icon: 'error',
+        background: '#000',
+        color: '#fff',
+        confirmButtonColor: '#0071e3'
+      });
     }
   };
 

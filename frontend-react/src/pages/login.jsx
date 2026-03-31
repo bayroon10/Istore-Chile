@@ -15,7 +15,14 @@ export default function Login() {
     try {
       const data = await adminLogin(email, password);
       
-      Swal.fire({ title: `¡Bienvenido ${data.usuario}!`, icon: 'success', timer: 1500, showConfirmButton: false });
+      Swal.fire({ 
+        title: `¡Bienvenido ${data.usuario}!`, 
+        icon: 'success', 
+        timer: 1500, 
+        showConfirmButton: false,
+        background: '#000',
+        color: '#fff'
+      });
       
       if (data.role === 'admin') {
         navigate('/admin');
@@ -23,40 +30,69 @@ export default function Login() {
         navigate('/mi-cuenta');
       }
     } catch (err) {
-      Swal.fire('Acceso Denegado', err.message || 'Credenciales incorrectas', 'error');
+      Swal.fire({
+        title: 'Acceso Denegado', 
+        text: err.message || 'Credenciales incorrectas', 
+        icon: 'error',
+        background: '#000',
+        color: '#fff'
+      });
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
-      <div style={{ background: '#1d1d1f', padding: '50px', borderRadius: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', textAlign: 'center' }}>
-        
-        <h1 style={{ color: 'white', margin: '0 0 10px 0', fontSize: '32px' }}> iStore Admin</h1>
-        <p style={{ color: '#86868b', marginBottom: '40px' }}>Ingresa tus credenciales para continuar</p>
+    <div className="min-h-screen bg-pitch-black flex justify-center items-center font-sans p-4 relative overflow-hidden">
+      
+      {/* 🔮 EFECTOS DE FONDO (GLOWS) */}
+      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-urban-blue/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-urban-blue/5 rounded-full blur-[100px] pointer-events-none"></div>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <input 
-            type="email" 
-            placeholder="Correo electrónico" 
-            required 
-            value={email} 
-            onChange={e => setEmail(e.target.value)} 
-            style={{ padding: '15px', borderRadius: '12px', border: '1px solid #333', background: '#000', color: 'white', fontSize: '16px', outline: 'none' }} 
-          />
-          <input 
-            type="password" 
-            placeholder="Contraseña" 
-            required 
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            style={{ padding: '15px', borderRadius: '12px', border: '1px solid #333', background: '#000', color: 'white', fontSize: '16px', outline: 'none' }} 
-          />
+      <div className="glass-dark p-10 rounded-[32px] w-full max-w-md shadow-2xl backdrop-blur-2xl border border-white/10 relative z-10">
+        
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-urban-blue/10 border border-urban-blue/30 mb-6 shadow-neon-blue">
+            <span className="text-3xl text-urban-blue font-black"></span>
+          </div>
+          <h1 className="text-white text-3xl font-black tracking-tight mb-2 uppercase"> iStore <span className="text-urban-blue">Admin</span></h1>
+          <p className="text-gray-400 font-medium">Protocolo de acceso restringido</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="flex flex-col gap-6">
+          <div className="group">
+             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-urban-blue transition-colors">Identidad Digital</label>
+             <input 
+              type="email" 
+              placeholder="correo@istore.cl" 
+              required 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+              className="w-full p-4 rounded-2xl border border-white/5 bg-black/40 text-white placeholder:text-gray-600 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all duration-300" 
+            />
+          </div>
+          
+          <div className="group">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-urban-blue transition-colors">Código de Acceso</label>
+            <input 
+              type="password" 
+              placeholder="••••••••" 
+              required 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              className="w-full p-4 rounded-2xl border border-white/5 bg-black/40 text-white placeholder:text-gray-600 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all duration-300" 
+            />
+          </div>
+
           <button 
             type="submit" 
-            style={{ background: '#0071e3', color: 'white', border: 'none', padding: '15px', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', marginTop: '10px' }}>
-            Iniciar Sesión ➔
+            className="w-full bg-urban-blue text-white py-4 rounded-2xl font-black text-lg hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-neon-blue flex items-center justify-center gap-2 group mt-4">
+            INICIAR SESIÓN 
+            <span className="group-hover:translate-x-1 transition-transform">➔</span>
           </button>
         </form>
+
+        <div className="mt-8 pt-8 border-t border-white/5 text-center">
+            <p className="text-gray-600 text-xs font-bold uppercase tracking-widest">SISTEMA INTEGRADO ISTORE PRO v3.1</p>
+        </div>
       </div>
     </div>
   );
