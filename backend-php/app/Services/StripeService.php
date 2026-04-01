@@ -18,7 +18,7 @@ class StripeService
         // 2. Si por alguna razón sigue vacía, ponemos una de prueba provisoria 
         // para que no explote el servidor con el Error 500
         if (empty($secretKey) || !is_string($secretKey)) {
-            $secretKey = 'sk_test_dummy_key_para_que_no_explote_el_servidor';
+            $secretKey = 'sk_test_51TDGYUBKumYnI58TfB3PtrhIU1heQebwCD8rv43tCRi3x4hZkKdAebIN9J18etnHK1h0sZj27i4wjlQSey54won100Zm1RL40V';
         }
 
         // 3. Inicializamos el cliente de Stripe asegurando que sea un String
