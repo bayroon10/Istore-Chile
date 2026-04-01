@@ -14,7 +14,8 @@ class OrderService
 {
     public function __construct(
         private StripeService $stripeService,
-    ) {}
+    ) {
+    }
 
     /**
      * Crea una orden a partir del carrito del usuario.
@@ -30,7 +31,7 @@ class OrderService
      *
      * Si CUALQUIER paso falla → rollback automático → no se cobra, no se descuenta nada.
      *
-     * @param User   $user         Usuario autenticado
+     * @param User   $user        Usuario autenticado
      * @param array  $shippingData Datos de dirección de envío
      * @param string $paymentMethod Método de pago ('stripe', etc.)
      * @param string|null $stripePaymentId ID del pago de Stripe (si aplica)
@@ -82,12 +83,12 @@ class OrderService
 
                 // Preparar el snapshot del order item
                 $orderItems[] = [
-                    'product_id'    => $product->id,
-                    'product_name'  => $product->name,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
                     'product_price' => $product->price,
                     'product_image' => $product->primaryImage?->url,
-                    'quantity'      => $cartItem->quantity,
-                    'subtotal'      => $itemSubtotal,
+                    'quantity' => $cartItem->quantity,
+                    'subtotal' => $itemSubtotal,
                 ];
             }
 
@@ -95,28 +96,28 @@ class OrderService
             // Paso 2: Calcular totales
             // -------------------------------------------------------
             $shippingCost = $shippingData['shipping_cost'] ?? 0;
-            $discount     = $shippingData['discount'] ?? 0;
-            $total        = $subtotal + $shippingCost - $discount;
+            $discount = $shippingData['discount'] ?? 0;
+            $total = $subtotal + $shippingCost - $discount;
 
             // -------------------------------------------------------
             // Paso 3: Crear la orden
             // -------------------------------------------------------
             $order = Order::create([
-                'user_id'          => $user->id,
-                'shipping_name'    => $shippingData['shipping_name'],
-                'shipping_phone'   => $shippingData['shipping_phone'],
-                'shipping_street'  => $shippingData['shipping_street'],
-                'shipping_city'    => $shippingData['shipping_city'],
-                'shipping_region'  => $shippingData['shipping_region'],
-                'shipping_method'  => $shippingData['shipping_method'],
-                'status'           => 'pending',
-                'subtotal'         => $subtotal,
-                'shipping_cost'    => $shippingCost,
-                'discount'         => $discount,
-                'total'            => $total,
-                'payment_method'   => $paymentMethod,
-                'notes'            => $shippingData['notes'] ?? null,
-                'paid_at'          => null,
+                'user_id' => $user->id,
+                'shipping_name' => $shippingData['shipping_name'],
+                'shipping_phone' => $shippingData['shipping_phone'],
+                'shipping_street' => $shippingData['shipping_street'],
+                'shipping_city' => $shippingData['shipping_city'],
+                'shipping_region' => $shippingData['shipping_region'],
+                'shipping_method' => $shippingData['shipping_method'],
+                'status' => 'pending',
+                'subtotal' => $subtotal,
+                'shipping_cost' => $shippingCost,
+                'discount' => $discount,
+                'total' => $total,
+                'payment_method' => $paymentMethod,
+                'notes' => $shippingData['notes'] ?? null,
+                'paid_at' => null,
             ]);
 
             // -------------------------------------------------------
@@ -128,7 +129,7 @@ class OrderService
             }
 
             // -------------------------------------------------------
-            // Paso 4: Crear order items + descontar stock
+            // Paso 5: Crear order items + descontar stock
             // -------------------------------------------------------
             foreach ($orderItems as $item) {
                 OrderItem::create(array_merge($item, [
@@ -144,12 +145,12 @@ class OrderService
             }
 
             // -------------------------------------------------------
-            // Paso 5: Vaciar el carrito
+            // Paso 6: Vaciar el carrito
             // -------------------------------------------------------
             $cart->items()->delete();
 
             return [
-                'order'         => $order,
+                'order' => $order,
                 'client_secret' => $clientSecret,
             ];
         });
@@ -213,11 +214,11 @@ class OrderService
         $order->status = $status;
 
         // Timestamps de ciclo de vida automáticos
-        match($status) {
-            'paid'      => $order->paid_at      = $order->paid_at ?? now(),
-            'shipped'   => $order->shipped_at   = now(),
-            'delivered' => $order->delivered_at  = now(),
-            default     => null,
+        match ($status) {
+            'paid' => $order->paid_at = $order->paid_at ?? now(),
+            'shipped' => $order->shipped_at = now(),
+            'delivered' => $order->delivered_at = now(),
+            default => null,
         };
 
         $order->save();
