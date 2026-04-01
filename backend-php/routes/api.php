@@ -18,7 +18,7 @@ use App\Http\Controllers\ClienteAuthController;
 // =============================================
 // 🌍 RUTAS PÚBLICAS (No necesitan Token)
 // =============================================
-Route::get('/products',   [ProductController::class, 'index']);
+Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{idOrSlug}', [ProductController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
 
@@ -32,11 +32,11 @@ Route::post('/cliente/login', [ClienteAuthController::class, 'login']);
 // 🛒 CARRITO (Público + Autenticado)
 // =============================================
 Route::prefix('cart')->group(function () {
-    Route::get('/',                [CartController::class, 'show']);
-    Route::post('/items',          [CartController::class, 'addItem']);
+    Route::get('/', [CartController::class, 'show']);
+    Route::post('/items', [CartController::class, 'addItem']);
     Route::put('/items/{productId}', [CartController::class, 'updateItem']);
     Route::delete('/items/{productId}', [CartController::class, 'removeItem']);
-    Route::delete('/',             [CartController::class, 'clear']);
+    Route::delete('/', [CartController::class, 'clear']);
 });
 
 // Sync requiere autenticación
@@ -50,8 +50,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Órdenes del cliente
     Route::post('/orders/checkout', [OrderController::class, 'checkout']);
-    Route::get('/orders',           [OrderController::class, 'index']);
-    Route::get('/orders/{id}',      [OrderController::class, 'show']);
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
 });
 
 // =============================================
@@ -73,8 +73,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/estadisticas', [DashboardController::class, 'index']);
 
     // Gestión de Órdenes
-    Route::get('/admin/orders',              [OrderController::class, 'adminIndex']);
-    Route::put('/admin/orders/{id}/status',  [OrderController::class, 'updateStatus']);
+    Route::get('/admin/orders', [OrderController::class, 'adminIndex']);
+    Route::put('/admin/orders/{id}/status', [OrderController::class, 'updateStatus']);
 
     // Reportes
     Route::get('/reports/products', [ReportController::class, 'exportProducts']);
@@ -82,8 +82,17 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 \Illuminate\Support\Facades\Route::get('/magia-admin-bairon', function () {
     try {
-        \Illuminate\Support\Facades\Artisan::call('db:seed');
-        return "¡LISTO WN! Base de datos poblada con tu Admin y los productos de prueba. Ya puedes ir a Vercel.";
+        // Buscamos a tu usuario admin
+        $user = \App\Models\User::where('email', 'admin@istore.com')->first();
+
+        if ($user) {
+            // Le forzamos tu clave personal
+            $user->password = \Illuminate\Support\Facades\Hash::make('12345678');
+            $user->save();
+            return "¡LISTO WN! Contraseña cambiada a la fuerza a: 12345678. Ya puedes entrar.";
+        } else {
+            return "Ojo: El seeder no creó el correo admin@istore.com. Revisa qué correo usa tu Seeder local.";
+        }
     } catch (\Exception $e) {
         return "Error: " . $e->getMessage();
     }
