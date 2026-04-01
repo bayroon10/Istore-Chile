@@ -82,18 +82,30 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
 \Illuminate\Support\Facades\Route::get('/magia-admin-bairon', function () {
     try {
-        // Buscamos a tu usuario admin
-        $user = \App\Models\User::where('email', 'admin@istore.com')->first();
+        // 1. Creamos o actualizamos al usuario a la mala
+        $user = \App\Models\User::updateOrCreate(
+            ['email' => 'admin@istore.com'],
+            [
+                'name' => 'Admin iStore',
+                'password' => \Illuminate\Support\Facades\Hash::make('12345678')
+            ]
+        );
 
-        if ($user) {
-            // Le forzamos tu clave personal
-            $user->password = \Illuminate\Support\Facades\Hash::make('12345678');
-            $user->save();
-            return "¡LISTO WN! Contraseña cambiada a la fuerza a: 12345678. Ya puedes entrar.";
-        } else {
-            return "Ojo: El seeder no creó el correo admin@istore.com. Revisa qué correo usa tu Seeder local.";
+        // 2. Le damos el rol de Administrador (compatible con Spatie)
+        try {
+            $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+            $user->assignRole($role);
+        } catch (\Exception $e) {
+            // Si no usa Spatie, intentamos guardar en una columna 'rol' por si acaso
+            try {
+                $user->rol = 'admin';
+                $user->save();
+            } catch (\Exception $e2) {
+            }
         }
+
+        return "¡CORONAMOS MANO! Cuenta de Admin creada/forzada con éxito. Correo: admin@istore.com | Clave: 12345678";
     } catch (\Exception $e) {
-        return "Error: " . $e->getMessage();
+        return "Error creando el admin: " . $e->getMessage();
     }
 });
