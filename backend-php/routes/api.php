@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\ClienteAuthController;
 
+
+
 // =============================================
 // 🌍 RUTAS PÚBLICAS (No necesitan Token)
 // =============================================
@@ -76,4 +78,15 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     // Reportes
     Route::get('/reports/products', [ReportController::class, 'exportProducts']);
+});
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/magia-admin-bairon', function () {
+    try {
+        Artisan::call('db:seed');
+        return "¡LISTO WN! Base de datos poblada con tu Admin y los productos de prueba. Ya puedes ir a Vercel.";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
 });
