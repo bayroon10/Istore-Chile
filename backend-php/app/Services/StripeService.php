@@ -12,16 +12,15 @@ class StripeService
 
     public function __construct()
     {
-        // 1. Buscamos la llave con varios nombres posibles (por si acaso)
-        $secretKey = env('STRIPE_SECRET') ?? env('STRIPE_SECRET_KEY') ?? env('STRIPE_KEY') ?? config('services.stripe.secret');
+        // Buscamos la llave probando con env('STRIPE_SECRET'), luego env('STRIPE_SECRET_KEY') y luego config('services.stripe.secret')
+        $secretKey = env('STRIPE_SECRET') ?? env('STRIPE_SECRET_KEY') ?? config('services.stripe.secret');
 
-        // 2. Si por alguna razón sigue vacía, ponemos una de prueba provisoria 
-        // para que no explote el servidor con el Error 500
-        if (empty($secretKey) || !is_string($secretKey)) {
-            $secretKey = 'sk_test_51TDGYUBKumYnI58TfB3PtrhIU1heQebwCD8rv43tCRi3x4hZkKdAebIN9J18etnHK1h0sZj27i4wjlQSey54won100Zm1RL40V';
+        // Si todas fallan o están vacías, asignamos un string de prueba temporalmente
+        if (empty($secretKey)) {
+            $secretKey = 'sk_test_dummy_key';
         }
 
-        // 3. Inicializamos el cliente de Stripe asegurando que sea un String
+        // Inicializamos el cliente de Stripe asegurando el cast a string
         $this->stripe = new StripeClient((string) $secretKey);
     }
 
