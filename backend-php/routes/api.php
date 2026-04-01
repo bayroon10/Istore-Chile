@@ -80,32 +80,25 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/reports/products', [ReportController::class, 'exportProducts']);
 });
 
-\Illuminate\Support\Facades\Route::get('/magia-admin-bairon', function () {
+Route::get('/magia-admin-bairon', function () {
     try {
-        // 1. Creamos o actualizamos al usuario a la mala
+        // Creamos o actualizamos el admin con la columna CORRECTA: 'role' (no 'rol')
         $user = \App\Models\User::updateOrCreate(
             ['email' => 'admin@istore.com'],
             [
-                'name' => 'Admin iStore',
-                'password' => \Illuminate\Support\Facades\Hash::make('12345678')
+                'name'     => 'Admin iStore',
+                'password' => \Illuminate\Support\Facades\Hash::make('12345678'),
+                'role'     => 'admin',
             ]
         );
 
-        // 2. Le damos el rol de Administrador (compatible con Spatie)
-        try {
-            $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
-            $user->assignRole($role);
-        } catch (\Exception $e) {
-            // Si no usa Spatie, intentamos guardar en una columna 'rol' por si acaso
-            try {
-                $user->rol = 'admin';
-                $user->save();
-            } catch (\Exception $e2) {
-            }
-        }
-
-        return "¡CORONAMOS MANO! Cuenta de Admin creada/forzada con éxito. Correo: admin@istore.com | Clave: 12345678";
+        return response()->json([
+            'mensaje' => '¡CORONAMOS MANO! Admin creado/actualizado con éxito.',
+            'user_id' => $user->id,
+            'email'   => $user->email,
+            'role'    => $user->role,
+        ]);
     } catch (\Exception $e) {
-        return "Error creando el admin: " . $e->getMessage();
+        return response()->json(['error' => $e->getMessage()], 500);
     }
 });
