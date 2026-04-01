@@ -21,20 +21,17 @@ class OrderService
      * Crea una orden a partir del carrito del usuario.
      *
      * Flujo transaccional:
-     * 1. Bloquear los productos con lockForUpdate (nivel fila en PostgreSQL)
+     * 1. Bloquear los productos con lockForUpdate
      * 2. Validar stock de cada ítem
      * 3. Crear la orden con los datos de envío
      * 4. Crear los order_items con snapshot del precio/nombre/imagen
-     * 5. Descontar stock con decrement() (atómico a nivel SQL)
+     * 5. Descontar stock con decrement()
      * 6. Vaciar el carrito
      * 7. Actualizar sales_count de cada producto
-     *
-     * Si CUALQUIER paso falla → rollback automático → no se cobra, no se descuenta nada.
      *
      * @param User   $user        Usuario autenticado
      * @param array  $shippingData Datos de dirección de envío
      * @param string $paymentMethod Método de pago ('stripe', etc.)
-     * @param string|null $stripePaymentId ID del pago de Stripe (si aplica)
      *
      * @throws Exception si el carrito está vacío, stock insuficiente, etc.
      */
@@ -59,8 +56,6 @@ class OrderService
             // Paso 1: Validar stock y preparar ítems
             // -------------------------------------------------------
             foreach ($cart->items as $cartItem) {
-                // lockForUpdate() bloquea la fila del producto hasta que termine la transacción
-                // Si otro request intenta comprar el mismo producto, ESPERA aquí
                 $product = Product::lockForUpdate()->find($cartItem->product_id);
 
                 if (!$product) {
@@ -81,7 +76,6 @@ class OrderService
                 $itemSubtotal = $product->price * $cartItem->quantity;
                 $subtotal += $itemSubtotal;
 
-                // Preparar el snapshot del order item
                 $orderItems[] = [
                     'product_id' => $product->id,
                     'product_name' => $product->name,
@@ -136,11 +130,8 @@ class OrderService
                     'order_id' => $order->id,
                 ]));
 
-                // decrement() ejecuta UPDATE SET stock = stock - N (atómico en SQL)
                 $product = Product::find($item['product_id']);
                 $product->decrement('stock', $item['quantity']);
-
-                // Incrementar contador de ventas
                 $product->increment('sales_count', $item['quantity']);
             }
 
@@ -168,7 +159,7 @@ class OrderService
     }
 
     /**
-     * Obtiene una orden específica del usuario (validando propiedad).
+     * Obtiene una orden específica del usuario.
      */
     public function getUserOrder(User $user, int $orderId): Order
     {
@@ -204,7 +195,6 @@ class OrderService
     public function updateOrderStatus(int $orderId, string $status): Order
     {
         $order = Order::findOrFail($orderId);
-
         $validStatuses = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'];
 
         if (!in_array($status, $validStatuses)) {
@@ -213,7 +203,6 @@ class OrderService
 
         $order->status = $status;
 
-        // Timestamps de ciclo de vida automáticos
         match ($status) {
             'paid' => $order->paid_at = $order->paid_at ?? now(),
             'shipped' => $order->shipped_at = now(),
