@@ -14,9 +14,10 @@ return new class extends Migration
                   ->constrained()
                   ->cascadeOnDelete();    // Si se borra el producto, se borran sus imágenes
 
-            $table->string('url');                              // Ruta en storage o URL de Cloudinary
-            $table->unsignedInteger('sort_order')->default(0); // Para ordenar las fotos
-            $table->boolean('is_primary')->default(false);     // La foto principal del producto
+            $table->string('image_url');                              // URL de Cloudinary
+            $table->string('public_id')->nullable();                  // ID de Cloudinary (para poder borrarla luego)
+            $table->unsignedInteger('sort_order')->default(0);        // Para ordenar las fotos
+            $table->boolean('is_primary')->default(false);            // La foto principal del producto
             $table->timestamps();
         });
     }

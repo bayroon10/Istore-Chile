@@ -17,7 +17,7 @@ class StripeService
 
         // Si todas fallan o están vacías, asignamos un string de prueba temporalmente
         if (empty($secretKey)) {
-            $secretKey = 'sk_test_dummy_key';
+            $secretKey = 'sk_test_dummy_key';   
         }
 
         // Inicializamos el cliente de Stripe asegurando el cast a string

@@ -71,7 +71,7 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Active noise cancellation with Adaptive Transparency.',
                 'price'       => 89990,
                 'stock'       => 20,
-                'is_featured' => true,
+                'is_featured' => 'true',
             ]
         );
 
@@ -82,7 +82,7 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Industry-leading noise canceling headphones.',
                 'price'       => 129990,
                 'stock'       => 10,
-                'is_featured' => true,
+                'is_featured' => 'true',
             ]
         );
 
@@ -107,7 +107,7 @@ class DatabaseSeeder extends Seeder
                 'street'     => 'Av. Providencia 1234, Depto 5B',
                 'city'       => 'Santiago',
                 'region'     => 'Región Metropolitana',
-                'is_default' => true,
+                'is_default' => 'true',
             ]
         );
 
