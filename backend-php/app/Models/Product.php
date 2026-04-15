@@ -67,7 +67,7 @@ class Product extends Model
     /** La imagen principal (is_primary = true) */
     public function primaryImage(): HasOne
     {
-        return $this->hasOne(ProductImage::class)->where('is_primary', true);
+        return $this->hasOne(ProductImage::class)->whereRaw('is_primary = true');
     }
 
     /** Reseñas de este producto */
@@ -105,8 +105,8 @@ class Product extends Model
     public function recalculateRating(): void
     {
         $this->update([
-            'rating_avg'    => $this->reviews()->where('is_approved', true)->avg('rating') ?? 0,
-            'reviews_count' => $this->reviews()->where('is_approved', true)->count(),
+            'rating_avg'    => $this->reviews()->whereRaw('is_approved = true')->avg('rating') ?? 0,
+            'reviews_count' => $this->reviews()->whereRaw('is_approved = true')->count(),
         ]);
     }
 }
