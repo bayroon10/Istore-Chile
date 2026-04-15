@@ -19,7 +19,7 @@ class ProductController extends Controller
     {
         $query = Product::query()
             ->with(['category', 'images'])
-            ->where('is_active', true);
+            ->whereRaw('is_active = true');
 
         // Búsqueda por nombre
         if ($request->has('search')) {
