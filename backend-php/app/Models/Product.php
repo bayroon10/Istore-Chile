@@ -95,7 +95,7 @@ class Product extends Model
     /** URL de la imagen principal o null */
     public function getPrimaryImageUrlAttribute(): ?string
     {
-        return $this->primaryImage?->url;
+        return $this->primaryImage?->image_url;
     }
 
     /**

@@ -19,9 +19,11 @@ return [
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000')),
+    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'https://istore-chile.vercel.app,http://localhost:5173,http://localhost:3000')),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https://istore-chile-.*\.vercel\.app$#',
+    ],
 
     'allowed_headers' => [
         'Content-Type',
