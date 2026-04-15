@@ -56,7 +56,7 @@ class OrderService
             // Paso 1: Validar stock y preparar ítems
             // -------------------------------------------------------
             foreach ($cart->items as $cartItem) {
-                $product = Product::lockForUpdate()->find($cartItem->product_id);
+                $product = Product::find($cartItem->product_id);
 
                 if (!$product) {
                     throw new Exception("El producto '{$cartItem->product->name}' ya no existe.");
