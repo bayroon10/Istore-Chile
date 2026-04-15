@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\DashboardController;
@@ -29,9 +30,9 @@ Route::post('/cliente/registro', [ClienteAuthController::class, 'registro']);
 Route::post('/cliente/login', [ClienteAuthController::class, 'login']);
 
 // =============================================
-// 🛒 CARRITO (Público + Autenticado)
+// 🛒 CARRITO (Autenticado - Temporalmente para el test)
 // =============================================
-Route::prefix('cart')->group(function () {
+Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
     Route::get('/', [CartController::class, 'show']);
     Route::post('/items', [CartController::class, 'addItem']);
     Route::put('/items/{productId}', [CartController::class, 'updateItem']);
@@ -63,6 +64,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
+    // Imágenes de Producto
+    Route::post('/products/{id}/images', [ProductImageController::class, 'store']);
+    Route::delete('/products/{id}/images/{imageId}', [ProductImageController::class, 'destroy']);
 
     // Gestión de Categorías
     Route::post('/categories', [CategoryController::class, 'store']);
@@ -179,8 +184,8 @@ Route::get('/magia-admin-bairon', function () {
 
             // 4. Imagen principal de placeholder garantizada
             \App\Models\ProductImage::firstOrCreate(
-                ['product_id' => $product->id, 'is_primary' => true],
-                ['url' => $prodData['image']]
+                ['product_id' => $product->id, 'is_primary' => 'true'],
+                ['image_url' => $prodData['image']]
             );
         }
 
