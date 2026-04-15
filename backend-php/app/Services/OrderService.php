@@ -80,7 +80,7 @@ class OrderService
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'product_price' => $product->price,
-                    'product_image' => $product->primaryImage?->url,
+                    'product_image' => $product->primaryImage?->image_url,
                     'quantity' => $cartItem->quantity,
                     'subtotal' => $itemSubtotal,
                 ];
