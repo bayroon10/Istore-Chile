@@ -18,7 +18,7 @@ export default function AdminLayout() {
           <Link to="/" style={{ color: '#ff9500', textDecoration: 'none', fontWeight: 'bold' }}>Ir a la Tienda ➔</Link>
           <button onClick={() => { 
               logout(); 
-              window.location.href = '/acceso-secreto-bairon'; 
+              window.location.href = '/admin/login'; 
             }} style={{ background: 'transparent', border: '1px solid #ff3b30', color: '#ff3b30', padding: '5px 15px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }}>
             Salir
           </button>

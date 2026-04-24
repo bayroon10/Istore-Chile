@@ -1,0 +1,25 @@
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+*.env
+
+# Carpetas de dependencias
+node_modules/
+vendor/
+
+# Laravel específico
+storage/*.key
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+database/*.sqlite
+
+# Frontend específico
+dist/
+.json
+.vercel
+
+# Sistema
+.DS_Store
+Thumbs.db

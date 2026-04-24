@@ -88,7 +88,7 @@ export default function App() {
             <Route path="/" element={<Tienda />} />
             <Route path="/tienda" element={<Tienda />} />
             <Route path="/mi-cuenta" element={<MiCuenta />} />
-            <Route path="/acceso-secreto-bairon" element={<Login />} />
+            <Route path="/admin/login" element={<Login />} />
 
             {/* RUTAS PRIVADAS (ADMIN) */}
             <Route path="/admin" element={
