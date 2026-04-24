@@ -1,0 +1,14 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "provider": {
+        "openrouter": {
+            "models": {
+                "qwen/qwen3-coder-480b:free": {
+                    "name": "Qwen3 Coder 480B Free"
+                }
+            }
+        }
+    },
+    "model": "openrouter/qwen/qwen3-coder-480b:free",
+    "small_model": "openrouter/qwen/qwen3-coder-480b:free"
+}

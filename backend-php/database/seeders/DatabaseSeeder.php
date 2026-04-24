@@ -13,6 +13,8 @@ use App\Models\OrderItem;
 use App\Models\Review;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
 
 class DatabaseSeeder extends Seeder
 {
@@ -201,5 +203,97 @@ class DatabaseSeeder extends Seeder
 
         // Recalcular el rating_avg y reviews_count del producto
         $airpods->recalculateRating();
+
+        // -------------------------------------------------------
+        // 9. Catálogo iStore Premium (Migrado desde Backdoor)
+        // -------------------------------------------------------
+        $categoriasInfo = [
+            ['name' => 'iPhone', 'slug' => 'iphone'],
+            ['name' => 'MacBook', 'slug' => 'macbook'],
+            ['name' => 'Accesorios', 'slug' => 'accesorios'],
+        ];
+        
+        $categorias = [];
+        foreach ($categoriasInfo as $catData) {
+            $categorias[$catData['slug']] = Category::firstOrCreate(
+                ['slug' => $catData['slug']],
+                ['name' => $catData['name']]
+            );
+        }
+
+
+        $productosInfo = [
+            [
+                'name' => 'iPhone 15 Pro Max',
+                'description' => 'El iPhone más avanzado con titanio.',
+                'price' => 1299990,
+                'stock' => 15,
+                'category_slug' => 'iphone',
+                'image' => 'https://via.placeholder.com/400?text=iPhone+15+Pro+Max'
+            ],
+            [
+                'name' => 'iPhone 14 Pro',
+                'description' => 'Cámara de 48MP y Dynamic Island.',
+                'price' => 999990,
+                'stock' => 10,
+                'category_slug' => 'iphone',
+                'image' => 'https://via.placeholder.com/400?text=iPhone+14+Pro'
+            ],
+            [
+                'name' => 'MacBook Pro 16" M3 Max',
+                'description' => 'Potencia bestial para creadores.',
+                'price' => 3499990,
+                'stock' => 5,
+                'category_slug' => 'macbook',
+                'image' => 'https://via.placeholder.com/400?text=MacBook+Pro+16'
+            ],
+            [
+                'name' => 'MacBook Air 15" M2',
+                'description' => 'Pantalla Liquid Retina expansiva.',
+                'price' => 1499990,
+                'stock' => 20,
+                'category_slug' => 'macbook',
+                'image' => 'https://via.placeholder.com/400?text=MacBook+Air+15'
+            ],
+            [
+                'name' => 'AirPods Pro 2 Plus',
+                'description' => 'Cancelación activa de ruido al doble.',
+                'price' => 249990,
+                'stock' => 30,
+                'category_slug' => 'accesorios',
+                'image' => 'https://via.placeholder.com/400?text=AirPods+Pro+2'
+            ],
+            [
+                'name' => 'MagSafe Charger Pro',
+                'description' => 'Carga inalámbrica rápida y sencilla.',
+                'price' => 49990,
+                'stock' => 50,
+                'category_slug' => 'accesorios',
+                'image' => 'https://via.placeholder.com/400?text=MagSafe+Charger'
+            ],
+        ];
+
+        foreach ($productosInfo as $prodData) {
+            $cat = $categorias[$prodData['category_slug']];
+            $slug = Str::slug($prodData['name']);
+
+            $product = Product::firstOrCreate(
+                ['slug' => $slug],
+                [
+                    'category_id' => $cat->id,
+                    'name' => $prodData['name'],
+                    'description' => $prodData['description'],
+                    'price' => $prodData['price'],
+                    'stock' => $prodData['stock'],
+                    'is_active' => 'true',
+                ]
+
+            );
+
+            \App\Models\ProductImage::firstOrCreate(
+                ['product_id' => $product->id, 'is_primary' => 'true'],
+                ['image_url' => $prodData['image']]
+            );
+        }
     }
 }

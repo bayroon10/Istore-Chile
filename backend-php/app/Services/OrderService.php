@@ -130,10 +130,33 @@ class OrderService
                     'order_id' => $order->id,
                 ]));
 
+                // -------------------------------------------------------
+                // Optimistic Locking: Actualización condicional
+                // -------------------------------------------------------
+                // En lugar de un simple decrement(), usamos un update que verifique la 'version'.
+                // Si la versión en la DB no es la misma que leímos al inicio, o el stock bajó,
+                // la query devolverá 0 filas afectadas, lo que indica un conflicto de concurrencia.
                 $product = Product::find($item['product_id']);
-                $product->decrement('stock', $item['quantity']);
-                $product->increment('sales_count', $item['quantity']);
+                
+                $affected = DB::table('products')
+                    ->where('id', $item['product_id'])
+                    ->where('version', $product->version)
+                    ->where('stock', '>=', $item['quantity'])
+                    ->update([
+                        'stock'       => DB::raw("stock - {$item['quantity']}"),
+                        'sales_count' => DB::raw("sales_count + {$item['quantity']}"),
+                        'version'     => DB::raw('version + 1'),
+                        'updated_at'  => now(),
+                    ]);
+
+                if ($affected === 0) {
+                    throw new Exception(
+                        "No se pudo procesar la compra para '{$product->name}'. " .
+                        "El inventario ha cambiado o es insuficiente. Por favor, intenta de nuevo."
+                    );
+                }
             }
+
 
             // -------------------------------------------------------
             // Paso 6: Vaciar el carrito
