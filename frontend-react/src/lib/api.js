@@ -8,7 +8,10 @@
  * - Content-Type: application/json
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_URL;
+if (!API_BASE) {
+  console.warn('⚠️ VITE_API_URL no está definida. Las peticiones a la API podrían fallar.');
+}
 // -------------------------------------------------------
 // Session ID para guest carts
 // -------------------------------------------------------
