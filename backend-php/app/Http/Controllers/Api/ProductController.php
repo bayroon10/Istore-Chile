@@ -21,9 +21,9 @@ class ProductController extends Controller
             ->with(['category', 'images'])
             ->whereRaw('is_active = true');
 
-        // Búsqueda por nombre
+        // Búsqueda por nombre (Database Agnostic: Case Insensitive en MySQL/Postgres)
         if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($request->search) . '%']);
         }
 
         // Filtro por categoría (ID o Slug)

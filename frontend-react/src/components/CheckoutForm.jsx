@@ -16,6 +16,8 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
     ciudad: ''
   });
 
+  const [shippingMethod, setShippingMethod] = useState('Starken');
+
   const handleChange = (e) => {
     setDatos({ ...datos, [e.target.name]: e.target.value });
   };
@@ -35,7 +37,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
         shipping_city: datos.ciudad,
         shipping_region: 'Metropolitana', // Default
         shipping_phone: '999999999',     // Placeholder
-        shipping_method: 'Standard'
+        shipping_method: shippingMethod
       });
 
       const { client_secret, order_id } = response.data;
@@ -113,6 +115,23 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
             </label>
           </div>
         ))}
+      </div>
+
+      {/* MÉTODO DE ENVÍO (SINCRONIZADO CON BACKEND) */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 pl-2">Método de Envío</p>
+        <div className="relative group">
+          <select
+            value={shippingMethod}
+            onChange={(e) => setShippingMethod(e.target.value)}
+            className="w-full h-14 bg-carbon-grey/40 border border-white/5 rounded-[1.2rem] px-5 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all appearance-none cursor-pointer"
+          >
+            <option value="Starken" className="bg-space-grey">Starken (Envío a Domicilio - $3.990)</option>
+            <option value="Chilexpress" className="bg-space-grey">Chilexpress (Envío Express - $4.500)</option>
+            <option value="Retiro" className="bg-space-grey">Retiro en Tienda (Gratis)</option>
+          </select>
+          <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</span>
+        </div>
       </div>
 
       {/* TARJETA STRIPE (URBAN STYLE) */}
