@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Swal from 'sweetalert2'
 import CheckoutForm from '../components/CheckoutForm';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/api';
 import Footer from '../components/Footer';
+import { useDebounce } from '../hooks/useDebounce';
 
 // 🌟 Stripe
 import { loadStripe } from '@stripe/stripe-js';
@@ -14,23 +15,79 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 export default function Tienda() {
   const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [verCarrito, setVerCarrito] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [categoriaActiva, setCategoriaActiva] = useState('Todas');
   const [mostrarCheckout, setMostrarCheckout] = useState(false);
 
+  // Estados de paginación y carga
+  const [pagina, setPagina] = useState(1);
+  const [hayMas, setHayMas] = useState(true);
+  const [cargando, setCargando] = useState(false);
+
+  const debouncedSearch = useDebounce(busqueda, 500);
+
   // Carrito del backend vía CartContext
   const { items, totalItems, totalPrice, addItem, updateQuantity, removeItem, refreshCart } = useCart();
   const { isAuthenticated } = useAuth();
 
-  // Cargar productos desde la API
+  // 1. Cargar categorías al inicio
   useEffect(() => {
-    api.get('/products')
-      .then(data => {
-        setProductos(data.data || []);
+    api.get('/categories')
+      .then(res => {
+        setCategorias(res.data || []);
       })
-      .catch(() => {}); // Erradicación de logs de depuración
+      .catch(err => {
+        console.error('Error cargando categorías:', err);
+      });
   }, []);
+
+  // 2. Función principal de carga de productos (Backend Driven)
+  const cargarProductos = useCallback(async (pageToLoad = 1, append = false) => {
+    setCargando(true);
+    try {
+      // Construcción de query params
+      let endpoint = `/products?page=${pageToLoad}&per_page=12`;
+      if (debouncedSearch) endpoint += `&search=${encodeURIComponent(debouncedSearch)}`;
+      if (categoriaActiva !== 'Todas') endpoint += `&category=${encodeURIComponent(categoriaActiva)}`;
+
+      const res = await api.get(endpoint);
+      
+      const nuevosProductos = res.data || [];
+      const meta = res.meta || {};
+
+      setProductos(prev => append ? [...prev, ...nuevosProductos] : nuevosProductos);
+      setHayMas(meta.current_page < meta.last_page);
+      setPagina(meta.current_page);
+    } catch (err) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Error de conexión',
+        text: 'No pudimos sincronizar el catálogo. Reintenta en unos segundos.',
+        background: '#1d1d1f',
+        color: '#fff',
+        showConfirmButton: false,
+        timer: 4000
+      });
+    } finally {
+      setCargando(false);
+    }
+  }, [debouncedSearch, categoriaActiva]);
+
+  // 3. Resetear y cargar cuando cambian filtros
+  useEffect(() => {
+    setPagina(1);
+    cargarProductos(1, false);
+  }, [debouncedSearch, categoriaActiva, cargarProductos]);
+
+  const handleCargarMas = () => {
+    if (!cargando && hayMas) {
+      cargarProductos(pagina + 1, true);
+    }
+  };
 
   const agregarAlCarrito = async (producto) => {
     const result = await addItem(producto.id);
@@ -65,12 +122,8 @@ export default function Tienda() {
     }
   };
 
-  const categoriasUnicas = ['Todas', ...new Set(productos.map(p => p.category?.name).filter(Boolean))];
-  const productosFiltrados = productos.filter(p => {
-    const nombre = (p.name || '').toLowerCase();
-    const categoria = p.category?.name || '';
-    return nombre.includes(busqueda.toLowerCase()) && (categoriaActiva === 'Todas' || categoria === categoriaActiva);
-  });
+  // Ya no necesitamos filtrar en cliente, lo hace el backend
+  const totalEnPantalla = productos.length;
 
   return (
     <div className="bg-pitch-black min-h-screen text-white font-sans selection:bg-urban-blue/30 selection:text-urban-blue">
@@ -237,13 +290,19 @@ export default function Tienda() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-4 md:pb-0 no-scrollbar">
-            {categoriasUnicas.map(cat => (
+            <button
+              onClick={() => setCategoriaActiva('Todas')}
+              className={`px-6 py-3 rounded-full text-sm font-black transition-smooth whitespace-nowrap border ${categoriaActiva === 'Todas' ? 'bg-urban-blue text-white border-urban-blue shadow-neon-blue' : 'glass border-white/5 text-gray-500 hover:text-white'}`}
+            >
+              TODAS
+            </button>
+            {categorias.map(cat => (
               <button
-                key={cat}
-                onClick={() => setCategoriaActiva(cat)}
-                className={`px-6 py-3 rounded-full text-sm font-black transition-smooth whitespace-nowrap border ${categoriaActiva === cat ? 'bg-urban-blue text-white border-urban-blue shadow-neon-blue' : 'glass border-white/5 text-gray-500 hover:text-white'}`}
+                key={cat.id}
+                onClick={() => setCategoriaActiva(cat.slug)}
+                className={`px-6 py-3 rounded-full text-sm font-black transition-smooth whitespace-nowrap border ${categoriaActiva === cat.slug ? 'bg-urban-blue text-white border-urban-blue shadow-neon-blue' : 'glass border-white/5 text-gray-500 hover:text-white'}`}
               >
-                {cat.toUpperCase()}
+                {cat.name.toUpperCase()}
               </button>
             ))}
           </div>
@@ -252,48 +311,81 @@ export default function Tienda() {
         {/* 📦 GRID DE PRODUCTOS (LUXURY) */}
         <div className="pb-24">
           <div className="flex items-end justify-between mb-10">
-            <h2 className="text-4xl font-black tracking-tighter">EL PRÓXIMO NIVEL <span className="text-gray-600">({productosFiltrados.length})</span></h2>
+            <h2 className="text-4xl font-black tracking-tighter">
+              EL PRÓXIMO NIVEL <span className="text-gray-600">({totalEnPantalla})</span>
+            </h2>
           </div>
 
-          {productosFiltrados.length === 0 ? (
+          {productos.length === 0 && !cargando ? (
             <div className="text-center py-20 glass rounded-[3rem] border-dashed border-white/10 text-gray-500 text-xl italic font-medium">
               No se han encontrado resultados en este cuadrante. 🛰️
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {productosFiltrados.map(p => (
-                <div
-                  key={p.id}
-                  className="glass-dark group relative rounded-[2.5rem] p-8 flex flex-col h-[460px] transition-smooth hover:-translate-y-2 hover:shadow-neon-glow hover:border-urban-blue/20"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-black tracking-[0.2em] text-urban-blue px-3 py-1 rounded-full glass border border-urban-blue/20 uppercase">
-                      {p.category?.name || 'GENERIC'}
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {productos.map(p => (
+                  <div
+                    key={p.id}
+                    className="glass-dark group relative rounded-[2.5rem] p-8 flex flex-col h-[460px] transition-smooth hover:-translate-y-2 hover:shadow-neon-glow hover:border-urban-blue/20"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <span className="text-[10px] font-black tracking-[0.2em] text-urban-blue px-3 py-1 rounded-full glass border border-urban-blue/20 uppercase">
+                        {p.category?.name || 'GENERIC'}
+                      </span>
+                      <span className="text-xl font-black tracking-tighter">$ {p.price.toLocaleString()}</span>
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-center p-4 relative group-hover:scale-110 transition-transform duration-700">
+                      <div className="absolute inset-0 bg-urban-blue/5 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <img
+                        src={p.primary_image_url || "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=800"}
+                        alt=""
+                        className="max-h-full max-w-full drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                      />
+                    </div>
+
+                    <div className="mt-6">
+                      <h3 className="text-xl font-black text-white leading-tight mb-6 line-clamp-2">{p.name}</h3>
+                      <button
+                        onClick={() => agregarAlCarrito(p)}
+                        className="w-full py-4 rounded-2xl bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-urban-blue hover:text-white transition-all duration-300"
+                      >
+                        Añadir a la Bolsa
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ⚡ LOAD MORE BUTTON (TECH-STYLE) */}
+              <div className="mt-20 flex flex-col items-center gap-6">
+                {hayMas && (
+                  <button
+                    onClick={handleCargarMas}
+                    disabled={cargando}
+                    className="group relative px-12 py-5 bg-transparent border border-white/10 rounded-full overflow-hidden transition-all duration-500 hover:border-urban-blue/50"
+                  >
+                    <div className="absolute inset-0 bg-urban-blue/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                    <span className="relative z-10 font-black tracking-[0.3em] uppercase text-xs flex items-center gap-3">
+                      {cargando ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-urban-blue border-t-transparent rounded-full animate-spin"></div>
+                          Sincronizando...
+                        </>
+                      ) : (
+                        'Cargar Más Equipamiento'
+                      )}
                     </span>
-                    <span className="text-xl font-black tracking-tighter">$ {p.price.toLocaleString()}</span>
-                  </div>
-
-                  <div className="flex-1 flex items-center justify-center p-4 relative group-hover:scale-110 transition-transform duration-700">
-                    <div className="absolute inset-0 bg-urban-blue/5 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <img
-                      src={p.primary_image_url || "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=800"}
-                      alt=""
-                      className="max-h-full max-w-full drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                    />
-                  </div>
-
-                  <div className="mt-6">
-                    <h3 className="text-xl font-black text-white leading-tight mb-6 line-clamp-2">{p.name}</h3>
-                    <button
-                      onClick={() => agregarAlCarrito(p)}
-                      className="w-full py-4 rounded-2xl bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-urban-blue hover:text-white transition-all duration-300"
-                    >
-                      Añadir a la Bolsa
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </button>
+                )}
+                
+                {!hayMas && productos.length > 0 && (
+                  <p className="text-gray-600 font-bold text-xs uppercase tracking-[0.4em] animate-pulse">
+                    Catálogo Completo — Fin de la Transmisión
+                  </p>
+                )}
+              </div>
+            </>
           )}
         </div>
 

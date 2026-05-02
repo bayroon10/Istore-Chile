@@ -38,6 +38,11 @@ class WebhookController extends Controller
 
         // Manejar el evento
         switch ($event->type) {
+            case 'checkout.session.completed':
+                $session = $event->data->object;
+                $this->handleCheckoutSessionCompleted($session);
+                break;
+
             case 'payment_intent.succeeded':
                 $paymentIntent = $event->data->object;
                 $this->handlePaymentIntentSucceeded($paymentIntent);
@@ -56,6 +61,21 @@ class WebhookController extends Controller
     }
 
     /**
+     * Maneja la sesión de checkout completada.
+     */
+    private function handleCheckoutSessionCompleted($session)
+    {
+        $orderId = $session->metadata->order_id ?? null;
+
+        if (!$orderId) {
+            Log::error("Webhook error: No order_id in metadata for Session {$session->id}");
+            return;
+        }
+
+        $this->processOrderPayment($orderId);
+    }
+
+    /**
      * Procesa una orden cuando el pago ha sido exitoso.
      */
     private function handlePaymentIntentSucceeded($paymentIntent)
@@ -67,20 +87,25 @@ class WebhookController extends Controller
             return;
         }
 
+        $this->processOrderPayment($orderId);
+    }
+
+    /**
+     * Lógica común para marcar una orden como pagada.
+     */
+    private function processOrderPayment($orderId)
+    {
         try {
             $order = Order::findOrFail($orderId);
 
-            // Evitar procesar dos veces si el webhook llega repetido
             if ($order->status === 'paid') {
                 return;
             }
 
-            // Actualizar la orden a pagada usando el OrderService para mantener la lógica centralizada
             $this->orderService->updateOrderStatus($order->id, 'paid');
-
             Log::info("Orden #{$order->order_number} marcada como PAGADA vía Webhook.");
         } catch (\Exception $e) {
-            Log::error("Error procesando webhook para orden {$orderId}: " . $e->getMessage());
+            Log::error("Error procesando pago para orden {$orderId}: " . $e->getMessage());
         }
     }
 }

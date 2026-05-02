@@ -45,9 +45,7 @@ class OrderController extends Controller
             'shipping_street'   => 'required|string|max:500',
             'shipping_city'     => 'required|string|max:100',
             'shipping_region'   => 'required|string|max:100',
-            'shipping_method'   => 'required|string|max:50',
-            'shipping_cost'     => 'integer|min:0',
-            'discount'          => 'integer|min:0',
+            'shipping_method'   => 'required|string|in:Starken,Chilexpress,Retiro',
             'notes'             => 'nullable|string|max:1000',
         ]);
 

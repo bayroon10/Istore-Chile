@@ -49,17 +49,17 @@ class OrderService
 
         return DB::transaction(function () use ($cart, $user, $shippingData, $paymentMethod) {
 
-            $subtotal = 0;
-            $orderItems = [];
-
             // -------------------------------------------------------
-            // Paso 1: Validar stock y preparar ítems
+            // Paso 1 & 5: Validar stock, descontar y preparar ítems (Pessimistic Locking)
             // -------------------------------------------------------
             foreach ($cart->items as $cartItem) {
-                $product = Product::find($cartItem->product_id);
+                // 🛡️ LOCK FOR UPDATE: Bloquea la fila para evitar race conditions
+                $product = Product::where('id', $cartItem->product_id)
+                    ->lockForUpdate()
+                    ->first();
 
                 if (!$product) {
-                    throw new Exception("El producto '{$cartItem->product->name}' ya no existe.");
+                    throw new Exception("El producto con ID {$cartItem->product_id} ya no existe.");
                 }
 
                 if (!$product->is_active) {
@@ -76,21 +76,32 @@ class OrderService
                 $itemSubtotal = $product->price * $cartItem->quantity;
                 $subtotal += $itemSubtotal;
 
-                $orderItems[] = [
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
+                // Snapshot para la orden
+                $orderItemsData[] = [
+                    'product_id'    => $product->id,
+                    'product_name'  => $product->name,
                     'product_price' => $product->price,
                     'product_image' => $product->primaryImage?->image_url,
-                    'quantity' => $cartItem->quantity,
-                    'subtotal' => $itemSubtotal,
+                    'quantity'      => $cartItem->quantity,
+                    'subtotal'      => $itemSubtotal,
                 ];
+
+                // Descontar stock atómicamente
+                $product->decrement('stock', $cartItem->quantity);
+                $product->increment('sales_count', $cartItem->quantity);
             }
 
             // -------------------------------------------------------
-            // Paso 2: Calcular totales
+            // Paso 2: Calcular totales (Seguridad: Calculado en servidor)
             // -------------------------------------------------------
-            $shippingCost = $shippingData['shipping_cost'] ?? 0;
-            $discount = $shippingData['discount'] ?? 0;
+            $shippingCost = match($shippingData['shipping_method']) {
+                'Starken'      => 3990,
+                'Chilexpress'  => 4500,
+                'Retiro'       => 0,
+                default        => 0
+            };
+            
+            $discount = 0; 
             $total = $subtotal + $shippingCost - $discount;
 
             // -------------------------------------------------------
@@ -123,38 +134,12 @@ class OrderService
             }
 
             // -------------------------------------------------------
-            // Paso 5: Crear order items + descontar stock
+            // Paso 5: Crear order items finalizados
             // -------------------------------------------------------
-            foreach ($orderItems as $item) {
+            foreach ($orderItemsData as $item) {
                 OrderItem::create(array_merge($item, [
                     'order_id' => $order->id,
                 ]));
-
-                // -------------------------------------------------------
-                // Optimistic Locking: Actualización condicional
-                // -------------------------------------------------------
-                // En lugar de un simple decrement(), usamos un update que verifique la 'version'.
-                // Si la versión en la DB no es la misma que leímos al inicio, o el stock bajó,
-                // la query devolverá 0 filas afectadas, lo que indica un conflicto de concurrencia.
-                $product = Product::find($item['product_id']);
-                
-                $affected = DB::table('products')
-                    ->where('id', $item['product_id'])
-                    ->where('version', $product->version)
-                    ->where('stock', '>=', $item['quantity'])
-                    ->update([
-                        'stock'       => DB::raw("stock - {$item['quantity']}"),
-                        'sales_count' => DB::raw("sales_count + {$item['quantity']}"),
-                        'version'     => DB::raw('version + 1'),
-                        'updated_at'  => now(),
-                    ]);
-
-                if ($affected === 0) {
-                    throw new Exception(
-                        "No se pudo procesar la compra para '{$product->name}'. " .
-                        "El inventario ha cambiado o es insuficiente. Por favor, intenta de nuevo."
-                    );
-                }
             }
 
 

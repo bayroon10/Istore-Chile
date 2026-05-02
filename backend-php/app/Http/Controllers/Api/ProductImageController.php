@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Http\Requests\StoreImageRequest;
 use App\Services\CloudinaryService;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductImageController extends Controller
 {
@@ -18,36 +20,61 @@ class ProductImageController extends Controller
     }
 
     /**
-     * Sube una nueva imagen para un producto.
+     * Sube una nueva imagen con resiliencia (compensación) y bloqueo pesimista.
      */
-    public function store(Request $request, $productId)
+    public function store(StoreImageRequest $request, $productId)
     {
         $product = Product::findOrFail($productId);
 
-        $request->validate([
-            'image' => 'required|image|max:5120', // máximo 5MB
-            'is_primary' => 'sometimes|boolean',
-        ]);
-
+        // 1. Subida a Cloudinary (Llamada externa fuera de transacción)
         $uploadResult = $this->cloudinary->uploadImage($request->file('image'));
-        
         $isPrimary = $request->boolean('is_primary');
 
-        // Si la enviada es_primary, convertimos el resto a false
-        if ($isPrimary) {
-            $product->images()->update(['is_primary' => false]);
+        try {
+            // 2. Transacción de Base de Datos con Bloqueo Pesimista
+            $productImage = DB::transaction(function () use ($product, $uploadResult, $isPrimary) {
+                if ($isPrimary) {
+                    // Bloqueamos los registros actuales del producto para evitar race conditions
+                    ProductImage::where('product_id', $product->id)
+                        ->lockForUpdate()
+                        ->update(['is_primary' => false]);
+                }
+
+                return $product->images()->create([
+                    'image_url' => $uploadResult['image_url'],
+                    'public_id' => $uploadResult['public_id'],
+                    'is_primary' => $isPrimary,
+                ]);
+            });
+
+            return response()->json([
+                'message' => 'Imagen procesada con éxito.',
+                'image' => $productImage
+            ], 201);
+
+        } catch (\Exception $e) {
+            // 3. Limpieza Compensatoria con Manejo de Doble Fallo (Double Fault)
+            try {
+                $this->cloudinary->deleteImage($uploadResult['public_id']);
+            } catch (\Exception $cloudinaryException) {
+                // Si incluso el borrado compensatorio falla, marcamos como crítico para limpieza manual
+                Log::critical("ASSET HUÉRFANO EN CLOUDINARY: No se pudo eliminar tras fallo en DB.", [
+                    'public_id' => $uploadResult['public_id'],
+                    'db_error'  => $e->getMessage(),
+                    'cloudinary_error' => $cloudinaryException->getMessage()
+                ]);
+            }
+
+            Log::error("Fallo de sincronización DB: " . $e->getMessage(), [
+                'product_id' => $productId,
+                'public_id'  => $uploadResult['public_id']
+            ]);
+
+            return response()->json([
+                'message' => 'Error crítico de sincronización.',
+                'error'   => 'La operación fue revertida localmente, pero ocurrió un error en el proveedor externo.'
+            ], 500);
         }
-
-        $productImage = $product->images()->create([
-            'image_url' => $uploadResult['image_url'],
-            'public_id' => $uploadResult['public_id'],
-            'is_primary' => $isPrimary,
-        ]);
-
-        return response()->json([
-            'message' => 'Imagen subida correctamente.',
-            'image' => $productImage
-        ], 201);
     }
 
     /**
