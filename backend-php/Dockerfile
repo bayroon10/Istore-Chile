@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_pgsql zip gd
 
-# 3. Habilitamos mod_rewrite para Laravel
-RUN a2enmod rewrite
+# 3. Habilitamos mod_rewrite y configuramos MPM para evitar conflictos
+RUN a2dismod mpm_event mpm_worker && a2enmod mpm_prefork && a2enmod rewrite
 
 # 4. Configuramos el DocumentRoot de Apache a la carpeta /public de Laravel
 ENV APACHE_DOCUMENT_ROOT /app/public
