@@ -14,8 +14,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_pgsql zip gd
 
 # 3. Habilitamos mod_rewrite y configuramos MPM para evitar conflictos
-RUN a2dismod mpm_event mpm_worker && a2enmod mpm_prefork && a2enmod rewrite
-
+RUN a2dismod mpm_event mpm_worker && a2enmod mpm_prefork
 # 4. Configuramos el DocumentRoot de Apache a la carpeta /public de Laravel
 ENV APACHE_DOCUMENT_ROOT /app/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
@@ -51,4 +50,4 @@ CMD sed -i "s/Listen 80/Listen ${PORT:-80}/g" /etc/apache2/ports.conf && \
     php artisan migrate --force && \
     apache2-foreground
 
-
+
