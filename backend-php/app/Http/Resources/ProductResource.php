@@ -29,7 +29,7 @@ class ProductResource extends JsonResource
             'images' => $this->whenLoaded('images', function() {
                 return $this->images->map(fn($img) => [
                     'id' => $img->id,
-                    'url' => Storage::disk('public')->url($img->url),
+                    'url' => $img->image_url,
                     'is_primary' => (bool) $img->is_primary,
                 ]);
             }),

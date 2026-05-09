@@ -9,9 +9,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Services\CloudinaryService;
 
 class ProductController extends Controller
 {
+    protected CloudinaryService $cloudinary;
+
+    public function __construct(CloudinaryService $cloudinary)
+    {
+        $this->cloudinary = $cloudinary;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -65,9 +73,10 @@ class ProductController extends Controller
             $product = Product::create($data);
 
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('products', 'public');
+                $uploadResult = $this->cloudinary->uploadImage($request->file('image'));
                 $product->images()->create([
-                    'url' => $path,
+                    'image_url' => $uploadResult['image_url'],
+                    'public_id' => $uploadResult['public_id'],
                     'is_primary' => true,
                 ]);
             }
@@ -116,15 +125,14 @@ class ProductController extends Controller
             $product->update($data);
 
             if ($request->hasFile('image')) {
-                // Eliminar imágenes anteriores opcionalmente o solo agregar una nueva primaria
-                // Por ahora, agregamos como nueva primaria
-                $path = $request->file('image')->store('products', 'public');
+                $uploadResult = $this->cloudinary->uploadImage($request->file('image'));
                 
                 // Marcar anteriores como no primarias
                 $product->images()->update(['is_primary' => false]);
                 
                 $product->images()->create([
-                    'url' => $path,
+                    'image_url' => $uploadResult['image_url'],
+                    'public_id' => $uploadResult['public_id'],
                     'is_primary' => true,
                 ]);
             }
@@ -139,6 +147,13 @@ class ProductController extends Controller
     public function destroy(string $id)
     {
         $product = Product::findOrFail($id);
+        
+        // Eliminar imágenes en Cloudinary antes de borrar el producto
+        foreach ($product->images as $image) {
+            if ($image->public_id) {
+                $this->cloudinary->deleteImage($image->public_id);
+            }
+        }
         
         // Soft delete visual o hard delete si se prefiere
         // El usuario pidió limpieza, así que borraremos el registro
