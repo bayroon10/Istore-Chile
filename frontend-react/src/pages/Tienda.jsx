@@ -168,7 +168,7 @@ export default function Tienda() {
             items.map((item) => (
               <div key={item.id} className="flex items-center gap-4 group">
                 <div className="w-20 h-20 bg-space-grey rounded-2xl flex items-center justify-center border border-white/5 group-hover:border-urban-blue/30 transition-all">
-                  <img src={item.product_image || "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=200"} alt="" className="w-16 h-16 object-contain" />
+                  <img src={item.product_image && !item.product_image.includes('via.placeholder.com') ? item.product_image : "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=200"} alt="" className="w-16 h-16 object-contain" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm truncate">{item.product_name}</p>
@@ -338,7 +338,7 @@ export default function Tienda() {
                     <div className="flex-1 flex items-center justify-center p-4 relative group-hover:scale-110 transition-transform duration-700">
                       <div className="absolute inset-0 bg-urban-blue/5 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                       <img
-                        src={p.primary_image_url || "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=800"}
+                        src={p.primary_image_url && !p.primary_image_url.includes('via.placeholder.com') ? p.primary_image_url : "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=800"}
                         alt=""
                         className="max-h-full max-w-full drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                       />

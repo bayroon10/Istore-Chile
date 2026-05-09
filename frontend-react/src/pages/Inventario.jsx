@@ -260,7 +260,7 @@ export default function Inventario() {
             {productos.map(p => (
               <tr key={p.id} style={{ borderBottom: '1px solid #333' }}>
                 <td style={{ padding: '15px' }}>
-                    <img src={p.primary_image_url || 'https://via.placeholder.com/50'} alt={p.name} style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '8px', background: 'white' }}/>
+                    <img src={p.primary_image_url && !p.primary_image_url.includes('via.placeholder.com') ? p.primary_image_url : 'https://placehold.co/50x50/png?text=Sin+Imagen'} alt={p.name} style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '8px', background: 'white' }}/>
                 </td>
                 <td style={{ padding: '15px' }}><b>{p.name}</b><br/><small style={{color:'#888'}}>{p.category?.name}</small></td>
                 <td style={{ padding: '15px' }}>${p.price.toLocaleString()}</td>

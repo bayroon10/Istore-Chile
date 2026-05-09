@@ -181,7 +181,7 @@ export default function MiCuenta() {
                         <div key={item.id} className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-transparent hover:border-white/10 transition-all">
                           <div className="w-14 h-14 bg-black rounded-xl p-2 flex items-center justify-center border border-white/5">
                             {item.product_image ? (
-                              <img src={item.product_image} alt={item.product_name} className="w-full h-full object-contain" />
+                              <img src={item.product_image && !item.product_image.includes('via.placeholder.com') ? item.product_image : 'https://placehold.co/50x50/png?text=Item'} alt={item.product_name} className="w-full h-full object-contain" />
                             ) : (
                               <span className="text-xl"></span>
                             )}
