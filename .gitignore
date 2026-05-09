@@ -23,3 +23,22 @@ dist/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Scripts de prueba locales con posibles credenciales
+*.ps1
+*.sh.local
+
+# Archivos de credenciales / volcados
+*.credentials
+*.secret
+credentials.json
+secrets.json
+
+# Archivos de entorno adicionales
+.env.staging
+.env.local
+.env.*.local
+
+# Carpetas de build adicionales
+.next/
+.nuxt/

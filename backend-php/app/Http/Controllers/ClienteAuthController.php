@@ -24,7 +24,8 @@ class ClienteAuthController extends Controller
         ]);
 
         $token = $user->createToken('customer_token')->plainTextToken;
-        return response()->json(['token' => $token, 'user' => $user], 201);
+        return response()->json(['token' => $token, 'user' => $user], 201)
+            ->cookie('token_istore', $token, 10080, '/', null, true, true, false, 'None');
     }
 
     public function login(Request $request)
@@ -36,7 +37,8 @@ class ClienteAuthController extends Controller
         }
 
         $token = $user->createToken('customer_token')->plainTextToken;
-        return response()->json(['token' => $token, 'user' => $user]);
+        return response()->json(['token' => $token, 'user' => $user])
+            ->cookie('token_istore', $token, 10080, '/', null, true, true, false, 'None');
     }
 
     public function perfil(Request $request)
@@ -49,5 +51,15 @@ class ClienteAuthController extends Controller
             'user'             => $user,
             'historial_compras' => [],
         ]);
+    }
+
+    public function logout(Request $request)
+    {
+        if ($request->user()) {
+            $request->user()->currentAccessToken()->delete();
+        }
+
+        return response()->json(['message' => 'Sesión cerrada con éxito'])
+            ->withoutCookie('token_istore');
     }
 }

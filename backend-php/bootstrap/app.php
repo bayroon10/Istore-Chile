@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
+        $middleware->prepend(\App\Http\Middleware\CookieToAuthorizationHeader::class);
+
+        $middleware->encryptCookies(except: [
+            'token_istore',
+        ]);
 
         $middleware->validateCsrfTokens(except: [
             'tienda/productos', // <-- Deja pasar a la tienda sin pase

@@ -24,7 +24,7 @@ class AuthController extends Controller
                 'token'   => $token,
                 'usuario' => $user->name,
                 'role'    => $user->role,   // campo renombrado: rol → role
-            ]);
+            ])->cookie('token_istore', $token, 10080, '/', null, true, true, false, 'None');
         }
 
         return response()->json(['error' => 'Credenciales incorrectas'], 401);

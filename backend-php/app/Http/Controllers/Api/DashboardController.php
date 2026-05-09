@@ -20,7 +20,7 @@ class DashboardController extends Controller
         $totalRevenue = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])
             ->sum('total');
 
-        $totalOrders = Order::count();
+        $totalOrders = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])->count();
         
         $pendingOrders = Order::where('status', 'pending')->count();
 
@@ -57,6 +57,50 @@ class DashboardController extends Controller
             ],
             'chart' => $chartData,
             'recent_orders' => OrderResource::collection($recentOrders),
+        ]);
+    }
+
+    /**
+     * Obtiene estadísticas específicas del almacén y valor de inventario.
+     */
+    public function warehouseStats()
+    {
+        $products = Product::all();
+        
+        $totalInventoryValue = $products->sum(function ($product) {
+            return $product->price * $product->stock;
+        });
+
+        $totalStockUnits = $products->sum('stock');
+        $activeProductsCount = $products->where('is_active', true)->count();
+        
+        $lowStockCount = $products->where('is_active', true)->where('stock', '<=', 5)->where('stock', '>', 0)->count();
+        $outOfStockCount = $products->where('is_active', true)->where('stock', 0)->count();
+
+        // Productos con mayor valor inmovilizado en stock
+        $topValuableProducts = Product::where('stock', '>', 0)
+            ->orderByRaw('(price * stock) DESC')
+            ->take(5)
+            ->get(['id', 'name', 'stock', 'price'])
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'stock' => $product->stock,
+                    'price' => (float) $product->price,
+                    'total_value' => (float) ($product->price * $product->stock)
+                ];
+            });
+
+        return response()->json([
+            'inventory_value' => (float) $totalInventoryValue,
+            'total_stock_units' => $totalStockUnits,
+            'active_products' => $activeProductsCount,
+            'alerts' => [
+                'low_stock' => $lowStockCount,
+                'out_of_stock' => $outOfStockCount,
+            ],
+            'top_valuable_products' => $topValuableProducts,
         ]);
     }
 }

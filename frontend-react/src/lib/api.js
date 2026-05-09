@@ -50,11 +50,33 @@ async function apiRequest(endpoint, options = {}) {
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   // Si el servidor devolvió 204 No Content, retornamos null
   if (response.status === 204) {
     return { ok: true, data: null, status: 204 };
+  }
+
+  // --- Manejo global de 401 ---
+  // Solo actuamos si la request era autenticada (tenía token).
+  // Las rutas públicas que devuelvan 401 se manejan normalmente.
+  if (response.status === 401 && token) {
+    // 1. Limpiar tokens del localStorage
+    localStorage.removeItem('token_istore');
+    localStorage.removeItem('cliente_token');
+    localStorage.removeItem('role_istore');
+    localStorage.removeItem('usuario_istore');
+
+    // 2. Notificar a AuthContext vía evento custom (no acoplamiento directo)
+    //    AuthContext escucha 'auth:expired' para limpiar su estado interno.
+    window.dispatchEvent(new CustomEvent('auth:expired', {
+      detail: { reason: 'Token inválido o expirado (401)' }
+    }));
+
+    const error = new Error('Sesión expirada. Por favor inicia sesión nuevamente.');
+    error.status = 401;
+    throw error;
   }
 
   const data = await response.json();

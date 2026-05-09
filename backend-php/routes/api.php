@@ -25,7 +25,10 @@ Route::get('/categories', [CategoryController::class, 'index']);
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/webhooks/stripe', [WebhookController::class, 'handle']);
-Route::post('/chatbot', [ChatbotController::class, 'chat']);
+
+// Rate limiting: 30 mensajes/minuto por IP — protege costos de Gemini API
+Route::post('/chatbot', [ChatbotController::class, 'chat'])->middleware('throttle:30,1');
+
 Route::post('/cliente/registro', [ClienteAuthController::class, 'registro']);
 Route::post('/cliente/login', [ClienteAuthController::class, 'login']);
 
@@ -48,6 +51,7 @@ Route::middleware('auth:sanctum')->post('/cart/sync', [CartController::class, 's
 // =============================================
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cliente/perfil', [ClienteAuthController::class, 'perfil']);
+    Route::post('/logout', [ClienteAuthController::class, 'logout']);
 
     // Órdenes del cliente
     Route::post('/orders/checkout', [OrderController::class, 'checkout']);
@@ -76,6 +80,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     // Dashboard y Estadísticas
     Route::get('/estadisticas', [DashboardController::class, 'index']);
+    Route::get('/admin/stats/warehouse', [DashboardController::class, 'warehouseStats']);
 
     // Gestión de Órdenes
     Route::get('/admin/orders', [OrderController::class, 'adminIndex']);

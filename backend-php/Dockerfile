@@ -1,7 +1,12 @@
-# 1. Usamos la versión CLI pura (Sin Apache, cero conflictos)
-FROM php:8.3-cli
+# ============================================================
+# Dockerfile de Producción — iStore Chile Backend
+# Migrado de php:8.3-cli (dev) → php:8.3-fpm + Nginx
+# ============================================================
 
-# 2. Instalamos las extensiones necesarias
+# 1. Imagen base: PHP-FPM (proceso manager real para producción)
+FROM php:8.3-fpm
+
+# 2. Instalar dependencias del sistema y extensiones PHP
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
@@ -10,26 +15,45 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     curl \
+    nginx \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_pgsql zip gd
+    && docker-php-ext-install pdo pdo_pgsql zip gd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# 3. Instalamos Node.js (Para Vite/React)
+# 3. Instalar Node.js 20 (para Vite build)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
+    && apt-get install -y nodejs \
+    && apt-get clean
 
-# 4. Instalamos Composer
+# 4. Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # 5. Carpeta de trabajo
 WORKDIR /app
 COPY . .
 
-# 6. Instalamos dependencias y compilamos
-RUN composer install --optimize-autoloader --no-dev
-RUN npm install && npm run build
+# 6. Dependencias PHP (sin dev)
+RUN composer install --optimize-autoloader --no-dev --no-interaction
 
-# 7. Permisos para Laravel
-RUN chmod -R 775 /app/storage /app/bootstrap/cache
+# 7. Build del frontend React (Vite)
+#    Nota: si el frontend está en un repo separado o se despliega en Vercel,
+#    este paso puede omitirse. Se mantiene por compatibilidad.
+RUN if [ -f "package.json" ]; then npm ci && npm run build; fi
 
-# 8. EL ARRANQUE MAESTRO: Migramos y prendemos el servidor nativo de Laravel
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+# 8. Permisos para Laravel
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
+    && chmod -R 775 /app/storage /app/bootstrap/cache
+
+# 9. Configuración Nginx
+COPY nginx.conf /etc/nginx/sites-available/default
+
+# 10. Entrypoint de producción
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# 11. Exponer puerto 80 (Nginx)
+EXPOSE 80
+
+# 12. Arranque: migra + optimiza + FPM + Nginx
+CMD ["/entrypoint.sh"]

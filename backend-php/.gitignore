@@ -23,5 +23,19 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# Ignorar scripts de prueba locales
+# Ignorar scripts de prueba locales con posibles credenciales
 /test_db.php
+*.ps1
+*.sh.local
+*.local.php
+
+# Archivos .env adicionales no cubiertos arriba
+.env.testing.local
+.env.staging
+.env.local
+
+# Archivos de credenciales exportadas o volcados
+*.credentials
+*.secret
+credentials.json
+secrets.json
