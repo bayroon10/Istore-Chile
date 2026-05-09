@@ -27,7 +27,7 @@ class CartController extends Controller
     private function resolveIdentity(Request $request): array
     {
         return [
-            'user'       => $request->user(),                           // null si es guest
+            'user'       => $request->user('sanctum'),                  // null si es guest
             'session_id' => $request->header('X-Session-Id'),  // UUID del frontend
         ];
     }

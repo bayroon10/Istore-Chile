@@ -35,7 +35,7 @@ Route::post('/cliente/login', [ClienteAuthController::class, 'login']);
 // =============================================
 // 🛒 CARRITO (Autenticado - Temporalmente para el test)
 // =============================================
-Route::middleware('auth:sanctum')->prefix('cart')->group(function () {
+Route::prefix('cart')->group(function () {
     Route::get('/', [CartController::class, 'show']);
     Route::post('/items', [CartController::class, 'addItem']);
     Route::put('/items/{productId}', [CartController::class, 'updateItem']);
