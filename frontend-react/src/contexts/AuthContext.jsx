@@ -10,6 +10,19 @@ export function AuthProvider({ children }) {
   );
   const [loading, setLoading] = useState(true);
 
+  const logout = useCallback(() => {
+    // Intentar invalidar el token en el servidor de manera asíncrona
+    api.post('/logout').catch(() => {});
+
+    localStorage.removeItem('token_istore');
+    localStorage.removeItem('cliente_token');
+    localStorage.removeItem('role_istore');
+    localStorage.removeItem('usuario_istore');
+    localStorage.removeItem('istore_logged_in');
+    setToken(null);
+    setUser(null);
+  }, []);
+
   // Al montarse, si hay token o el indicador de inicio de sesión por cookie, cargamos el perfil
   useEffect(() => {
     const hasToken = !!token;
@@ -33,7 +46,7 @@ export function AuthProvider({ children }) {
     } else {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, logout]);
 
   // Escucha el evento global 'auth:expired' disparado por api.js
   // cuando el backend responde 401 en una request autenticada.
@@ -100,18 +113,7 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
-  const logout = useCallback(() => {
-    // Intentar invalidar el token en el servidor de manera asíncrona
-    api.post('/logout').catch(() => {});
 
-    localStorage.removeItem('token_istore');
-    localStorage.removeItem('cliente_token');
-    localStorage.removeItem('role_istore');
-    localStorage.removeItem('usuario_istore');
-    localStorage.removeItem('istore_logged_in');
-    setToken(null);
-    setUser(null);
-  }, []);
 
   const value = {
     user,
