@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
@@ -104,6 +105,32 @@ class WebhookController extends Controller
 
             $this->orderService->updateOrderStatus($order->id, 'paid');
             Log::info("Orden #{$order->order_number} marcada como PAGADA vía Webhook.");
+
+            try {
+                // URL temporal de n8n (luego la pondremos en el .env)
+                $n8nWebhookUrl = env('N8N_WEBHOOK_URL', 'http://localhost:5678/webhook/istore-order-paid');
+                
+                // Cargar relaciones para tener todo el contexto de los items y su stock
+                $order->load('items.product');
+
+                Http::timeout(3)->post($n8nWebhookUrl, [
+                    'event' => 'order_paid',
+                    'order_number' => $order->order_number,
+                    'total' => $order->total,
+                    'items' => $order->items->map(function($item) {
+                        return [
+                            'product_id' => $item->product_id,
+                            'name' => $item->product_name,
+                            'quantity_bought' => $item->quantity,
+                            'current_stock' => $item->product ? $item->product->stock : 0 // Dato clave para la IA predictiva en n8n
+                        ];
+                    })
+                ]);
+                Log::info("Payload enviado a n8n para la orden #{$order->order_number}");
+            } catch (\Exception $e) {
+                // Si n8n está caído, no debemos romper el flujo de pago de la tienda
+                Log::error("Fallo al enviar webhook a n8n: " . $e->getMessage());
+            }
         } catch (\Exception $e) {
             Log::error("Error procesando pago para orden {$orderId}: " . $e->getMessage());
         }
