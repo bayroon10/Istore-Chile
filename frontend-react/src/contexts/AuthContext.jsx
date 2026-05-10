@@ -69,6 +69,10 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem('cliente_token'); // Limpiar legacy key
     localStorage.setItem('istore_logged_in', 'true');
+    
+    // Limpiar id de sesión temporal tras login exitoso (ya se sincronizó en el backend)
+    localStorage.removeItem('istore_session_id');
+    
     setUser(data.user);
 
     return data;
@@ -85,6 +89,9 @@ export function AuthProvider({ children }) {
     localStorage.setItem('istore_logged_in', 'true');
     localStorage.setItem('role_istore', data.role);
     localStorage.setItem('usuario_istore', data.usuario);
+
+    // Limpiar id de sesión temporal tras login exitoso (ya se sincronizó en el backend)
+    localStorage.removeItem('istore_session_id');
 
     // Cargar perfil completo
     try {
@@ -108,6 +115,10 @@ export function AuthProvider({ children }) {
     }
     localStorage.removeItem('cliente_token');
     localStorage.setItem('istore_logged_in', 'true');
+    
+    // Limpiar id de sesión temporal tras registro exitoso (ya se sincronizó en el backend)
+    localStorage.removeItem('istore_session_id');
+    
     setUser(data.user);
 
     return data;

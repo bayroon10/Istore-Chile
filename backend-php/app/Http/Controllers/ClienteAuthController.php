@@ -24,6 +24,18 @@ class ClienteAuthController extends Controller
         ]);
 
         $token = $user->createToken('customer_token')->plainTextToken;
+
+        // Sincronizar carrito de invitado si existe session_id
+        $sessionId = $request->header('X-Session-Id');
+        if ($sessionId) {
+            try {
+                $cartService = app(\App\Services\CartService::class);
+                $cartService->syncGuestCartToUser($user, $sessionId);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Error al sincronizar carrito en registro de cliente: ' . $e->getMessage());
+            }
+        }
+
         return response()->json(['token' => $token, 'user' => $user], 201)
             ->cookie('token_istore', $token, 10080, '/', null, true, true, false, 'None');
     }
@@ -37,6 +49,18 @@ class ClienteAuthController extends Controller
         }
 
         $token = $user->createToken('customer_token')->plainTextToken;
+
+        // Sincronizar carrito de invitado si existe session_id
+        $sessionId = $request->header('X-Session-Id');
+        if ($sessionId) {
+            try {
+                $cartService = app(\App\Services\CartService::class);
+                $cartService->syncGuestCartToUser($user, $sessionId);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Error al sincronizar carrito en login de cliente: ' . $e->getMessage());
+            }
+        }
+
         return response()->json(['token' => $token, 'user' => $user])
             ->cookie('token_istore', $token, 10080, '/', null, true, true, false, 'None');
     }

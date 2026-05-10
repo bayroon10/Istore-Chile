@@ -19,6 +19,17 @@ class AuthController extends Controller
             $user = Auth::user();
             $token = $user->createToken('token_admin')->plainTextToken;
             
+            // Sincronizar carrito de invitado si existe session_id
+            $sessionId = $request->header('X-Session-Id');
+            if ($sessionId) {
+                try {
+                    $cartService = app(\App\Services\CartService::class);
+                    $cartService->syncGuestCartToUser($user, $sessionId);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Error al sincronizar carrito en AuthController login: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
                 'mensaje' => 'Bienvenido al panel',
                 'token'   => $token,

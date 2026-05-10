@@ -178,8 +178,8 @@ class CartController extends Controller
 
         try {
             $cart = $this->cartService->syncGuestCartToUser(
-                $request->session_id,
                 $user,
+                $request->session_id,
             );
 
             return $this->cartResponse($cart);

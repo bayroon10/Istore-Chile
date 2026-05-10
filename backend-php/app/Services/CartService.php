@@ -157,7 +157,7 @@ class CartService
      * - Si no existe, se mueve directamente
      * - El carrito guest se borra al final
      */
-    public function syncGuestCartToUser(string $sessionId, User $user): Cart
+    public function syncGuestCartToUser(User $user, string $sessionId): Cart
     {
         $guestCart = Cart::where('session_id', $sessionId)->first();
 
