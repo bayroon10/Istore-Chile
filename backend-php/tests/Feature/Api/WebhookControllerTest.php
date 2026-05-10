@@ -44,7 +44,7 @@ class WebhookControllerTest extends TestCase
 
         // 2. Arrange: Mock the static Webhook::constructEvent call
         // We create a nested structure to mock $event->type and $event->data->object
-        $mockEvent = Mockery::mock('Stripe\Event');
+        $mockEvent = new \stdClass();
         $mockEvent->type = 'payment_intent.succeeded';
         
         $mockObject = new \stdClass();

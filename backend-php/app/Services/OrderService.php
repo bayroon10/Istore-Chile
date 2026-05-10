@@ -49,6 +49,9 @@ class OrderService
 
         return DB::transaction(function () use ($cart, $user, $shippingData, $paymentMethod) {
 
+            $subtotal = 0;
+            $orderItemsData = [];
+
             // -------------------------------------------------------
             // Paso 1 & 5: Validar stock, descontar y preparar ítems (Pessimistic Locking)
             // -------------------------------------------------------

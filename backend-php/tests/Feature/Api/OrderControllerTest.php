@@ -58,7 +58,7 @@ class OrderControllerTest extends TestCase
         // 4. Assert: Correct HTTP status, client secret and order numbers
         $response->assertStatus(201)
             ->assertJsonPath('client_secret', 'pi_test_secret_123456')
-            ->assertJsonPath('data.shipping_name', 'Bairon Castro')
+            ->assertJsonPath('data.shipping.name', 'Bairon Castro')
             ->assertJsonPath('data.subtotal', 15000)
             ->assertJsonPath('data.shipping_cost', 4500)
             ->assertJsonPath('data.total', 19500);
@@ -103,6 +103,6 @@ class OrderControllerTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.shipping_name', 'Bairon Castro');
+            ->assertJsonPath('data.0.shipping.name', 'Bairon Castro');
     }
 }

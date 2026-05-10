@@ -50,7 +50,7 @@ class CartControllerTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonPath('data.items.0.product_id', $product->id)
             ->assertJsonPath('data.items.0.quantity', 2)
-            ->assertJsonPath('data.subtotal', 2000);
+            ->assertJsonPath('data.total_price', 2000);
     }
 
     /**
@@ -81,7 +81,7 @@ class CartControllerTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('data.items.0.quantity', 5)
-            ->assertJsonPath('data.subtotal', 2500);
+            ->assertJsonPath('data.total_price', 2500);
     }
 
     /**
