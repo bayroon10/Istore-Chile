@@ -9,6 +9,7 @@ import Pedidos from './pages/Pedidos'
 import AdminLayout from './layouts/AdminLayout'
 import MiCuenta from './pages/MiCuenta'
 import ChatAssistant from './components/ChatAssistant'
+import BIDashboard from './components/BIDashboard'
 
 // ==========================================
 // 🛡️ GUARDIA DE SEGURIDAD (SOLO ADMINS)
@@ -99,6 +100,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="inventario" element={<Inventario />} />
               <Route path="pedidos" element={<Pedidos />} />
+              <Route path="bi" element={<BIDashboard />} />
             </Route>
           </Routes>
         </main>
