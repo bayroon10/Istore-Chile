@@ -4,39 +4,27 @@ import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Cartesia
 import { AlertTriangle, Smartphone, DollarSign } from 'lucide-react';
 import api from '../lib/api';
 
-const dataVentasMock = [
-  { dia: 'Lun', ingresos: 120000 },
-  { dia: 'Mar', ingresos: 85000 },
-  { dia: 'Mie', ingresos: 210000 },
-  { dia: 'Jue', ingresos: 45000 },
-  { dia: 'Vie', ingresos: 320000 },
-  { dia: 'Sab', ingresos: 450000 },
-  { dia: 'Dom', ingresos: 290000 },
-];
-
-const dataStockMock = [
-  { nombre: 'Cargador 20W (Alt)', stock: 8, nivel: 'Crítico' },
-  { nombre: 'Audífonos i12 (Alt)', stock: 5, nivel: 'Crítico' },
-  { nombre: 'iPhone 11 64GB', stock: 3, nivel: 'Crítico' },
-  { nombre: 'Cable Lightning', stock: 45, nivel: 'Óptimo' },
-  { nombre: 'Funda Silicona', stock: 12, nivel: 'Atención' },
-];
-
 export default function Dashboard() {
   const [productos, setProductos] = useState([]);
   const [estadisticas, setEstadisticas] = useState({ kpis: {}, chart: [], recent_orders: [] });
+  const [salesTrend, setSalesTrend] = useState([]);
+  const [criticalStock, setCriticalStock] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     const cargarDatos = async () => {
       setCargando(true);
       try {
-        const [dataProd, dataEst] = await Promise.all([
+        const [dataProd, dataEst, dataTrend, dataCritical] = await Promise.all([
           api.get('/products'),
-          api.get('/estadisticas')
+          api.get('/estadisticas'),
+          api.get('/admin/stats/sales-trend'),
+          api.get('/admin/stats/critical-stock')
         ]);
         setProductos(dataProd.data || []);
         setEstadisticas(dataEst);
+        setSalesTrend(dataTrend || []);
+        setCriticalStock(dataCritical || []);
       } catch (err) {
         // Silencio en Dashboard
       } finally {
@@ -173,7 +161,7 @@ export default function Dashboard() {
           
           <div className="w-full h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dataVentasMock}>
+              <LineChart data={salesTrend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#222" />
                 <XAxis dataKey="dia" stroke="#444" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
                 <YAxis stroke="#444" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
@@ -195,10 +183,10 @@ export default function Dashboard() {
           
           <div className="w-full h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dataStockMock.filter(d => d.stock <= 15)} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <BarChart data={criticalStock} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#222" />
                 <XAxis type="number" stroke="#444" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
-                <YAxis dataKey="nombre" type="category" width={120} stroke="#888" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
+                <YAxis dataKey="producto" type="category" width={120} stroke="#888" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
                 <Tooltip contentStyle={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', background: '#1d1d1f', color: 'white', fontSize: '12px', fontWeight: 'bold' }} />
                 <Bar dataKey="stock" fill="#ef4444" radius={[0, 10, 10, 0]} barSize={16} />
               </BarChart>

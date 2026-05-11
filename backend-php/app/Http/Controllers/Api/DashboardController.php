@@ -103,4 +103,72 @@ class DashboardController extends Controller
             'top_valuable_products' => $topValuableProducts,
         ]);
     }
+
+    /**
+     * Obtiene la tendencia de ventas (ingresos totales de los últimos 7 días).
+     */
+    public function salesTrend()
+    {
+        $sevenDaysAgo = now()->subDays(6)->startOfDay(); // últimos 7 días incluyendo hoy
+        
+        // Inicializar los últimos 7 días con ingresos en 0
+        $days = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $englishDay = $date->format('l');
+            $dayNames = [
+                'Monday'    => 'Lun',
+                'Tuesday'   => 'Mar',
+                'Wednesday' => 'Mie',
+                'Thursday'  => 'Jue',
+                'Friday'    => 'Vie',
+                'Saturday'  => 'Sab',
+                'Sunday'    => 'Dom'
+            ];
+            $spanishDay = $dayNames[$englishDay] ?? $englishDay;
+            
+            $days[$date->format('Y-m-d')] = [
+                'dia' => $spanishDay,
+                'fecha' => $date->format('d/m'),
+                'ingresos' => 0
+            ];
+        }
+
+        // Obtener ventas reales agrupadas por día
+        $sales = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing', 'processing_payment'])
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->selectRaw('DATE(created_at) as date, SUM(total) as total_sales')
+            ->groupBy('date')
+            ->get();
+
+        foreach ($sales as $sale) {
+            if (isset($days[$sale->date])) {
+                $days[$sale->date]['ingresos'] = (float) $sale->total_sales;
+            }
+        }
+
+        return response()->json(array_values($days));
+    }
+
+    /**
+     * Obtiene los productos con stock crítico (menor o igual a 15).
+     */
+    public function criticalStock()
+    {
+        $products = Product::where('is_active', true)
+            ->where('stock', '<=', 15)
+            ->orderBy('stock', 'asc')
+            ->take(10) // Limitado a los 10 más críticos para evitar sobrecargar el gráfico
+            ->get(['name', 'stock']);
+
+        $chartData = $products->map(function ($product) {
+            return [
+                'producto' => strlen($product->name) > 15 ? substr($product->name, 0, 12) . '...' : $product->name,
+                'stock' => (int) $product->stock
+            ];
+        });
+
+        return response()->json($chartData);
+    }
 }
+

@@ -81,6 +81,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     // Dashboard y Estadísticas
     Route::get('/estadisticas', [DashboardController::class, 'index']);
     Route::get('/admin/stats/warehouse', [DashboardController::class, 'warehouseStats']);
+    Route::get('/admin/stats/sales-trend', [DashboardController::class, 'salesTrend']);
+    Route::get('/admin/stats/critical-stock', [DashboardController::class, 'criticalStock']);
 
     // Gestión de Órdenes
     Route::get('/admin/orders', [OrderController::class, 'adminIndex']);
