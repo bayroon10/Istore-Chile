@@ -16,7 +16,14 @@ php artisan db:monitor --max=3 2>/dev/null || echo "[iStore] Advertencia: db:mon
 echo "[iStore] Ejecutando migraciones..."
 php artisan migrate --force
 
-# 3. Optimizar la aplicación para producción
+# 3. Limpiar caches antiguos antes de optimizar
+echo "[iStore] Limpiando caches antiguos..."
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+
+# 4. Optimizar la aplicación para producción
 echo "[iStore] Optimizando cache de configuración y rutas..."
 php artisan config:cache
 php artisan route:cache

@@ -2,34 +2,21 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Cross-Origin Resource Sharing (CORS) Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Orígenes permitidos se leen desde la variable CORS_ALLOWED_ORIGINS
-    | en el archivo .env. Separar múltiples dominios con coma.
-    |
-    | Ejemplo en .env:
-    | CORS_ALLOWED_ORIGINS=https://mi-tienda.vercel.app,http://localhost:5173
-    |
-    */
-
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173'), 'https://istore-chile.vercel.app'],
+    'allowed_origins' => array_filter(
+        explode(',', env('CORS_ALLOWED_ORIGINS', 'https://istore-chile.vercel.app,http://localhost:5173'))
+    ),
 
-    'allowed_origins_patterns' => [
-        '#^https://labstock-pro-.*\.vercel\.app$#',
-    ],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => ['Content-Disposition'],
+    'exposed_headers' => [],
 
-    'max_age' => 600,
+    'max_age' => 86400,
 
     'supports_credentials' => true,
 
