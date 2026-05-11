@@ -14,7 +14,7 @@ php artisan db:monitor --max=3 2>/dev/null || echo "[iStore] Advertencia: db:mon
 
 # 2. Ejecutar migraciones (--force para producción)
 echo "[iStore] Ejecutando migraciones..."
-php artisan migrate --force
+php artisan migrate --force || echo "[iStore] ADVERTENCIA: No se pudieron ejecutar las migraciones. Continuando inicio del servidor..."
 
 # 3. Limpiar caches antiguos antes de optimizar
 echo "[iStore] Limpiando caches antiguos..."
