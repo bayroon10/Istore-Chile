@@ -12,9 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->prepend(\App\Http\Middleware\ForceCors::class);
         $middleware->trustProxies(at: '*');
-        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
         $middleware->prepend(\App\Http\Middleware\CookieToAuthorizationHeader::class);
 
         $middleware->encryptCookies(except: [
