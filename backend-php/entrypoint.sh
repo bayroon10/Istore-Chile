@@ -22,6 +22,7 @@ php artisan config:clear
 php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
+php artisan optimize:clear
 
 # 4. Optimizar la aplicación para producción
 echo "[iStore] Optimizando cache de configuración y rutas..."
