@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import api from '../lib/api';
+import { Package, Pencil, Trash2, Download, Plus, X, Image } from 'lucide-react';
 
 export default function Inventario() {
   const [productos, setProductos] = useState([]);
@@ -202,89 +203,219 @@ export default function Inventario() {
   };
 
   if (loading) {
-    return <div style={{ color: 'white', textAlign: 'center', padding: '100px' }}>Cargando inventario...</div>
+    return (
+      <div className="space-y-8 animate-pulse">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-white/5 rounded-lg"></div>
+            <div className="h-4 w-64 bg-white/5 rounded-lg"></div>
+          </div>
+          <div className="h-12 w-40 bg-white/5 rounded-xl"></div>
+        </div>
+        <div className="h-48 w-full bg-white/5 rounded-[2rem]"></div>
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-20 w-full bg-white/5 rounded-[1.5rem]"></div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+    <div className="space-y-8">
+      {/* HEADER DE INVENTARIO */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 style={{ fontSize: '28px', marginBottom: '5px' }}>📦 Inventario</h2>
-          <p style={{ color: '#888', margin: 0 }}>Gestiona los productos del marketplace.</p>
+          <h2 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+            <Package className="text-urban-blue" size={32} /> Inventario
+          </h2>
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-1">
+            Gestiona los productos del marketplace.
+          </p>
         </div>
         
         <button 
           onClick={descargarExcel}
-          style={{ background: '#34c759', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', gap: '8px', alignItems: 'center' }}
+          className="px-6 py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black uppercase text-xs tracking-widest hover:bg-emerald-500/20 hover:text-emerald-300 hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all flex items-center gap-2 cursor-pointer"
         >
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
-            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-          </svg>
+          <Download size={16} />
           Descargar Excel
         </button>
       </div>
 
-      <form onSubmit={guardarProducto} style={{ background: '#1d1d1f', padding: '25px', borderRadius: '16px', marginBottom: '30px', display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-        <input type="text" placeholder="Nombre" required value={formulario.name} onChange={e => setFormulario({...formulario, name: e.target.value})} style={inputStyle} />
-        
-        <select required value={formulario.category_id} onChange={e => setFormulario({...formulario, category_id: e.target.value})} style={inputStyle}>
-            <option value="">Selecciona Categoría</option>
-            {categorias.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-        </select>
+      {/* FORMULARIO EDITAR/CREAR */}
+      <div className="glass-dark rounded-[2rem] p-8 border border-white/10 shadow-2xl relative overflow-hidden">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6 flex items-center gap-2">
+          {editandoId ? <Pencil size={12} className="text-amber-400" /> : <Plus size={12} className="text-urban-blue" />}
+          {editandoId ? 'Editar Producto' : 'Crear Nuevo Producto'}
+        </p>
 
-        <input type="number" placeholder="Precio" required value={formulario.price} onChange={e => setFormulario({...formulario, price: e.target.value})} style={{ ...inputStyle, width: '120px' }} />
-        <input type="number" placeholder="Stock" required value={formulario.stock} onChange={e => setFormulario({...formulario, stock: e.target.value})} style={{ ...inputStyle, width: '100px' }} />
-        <input type="file" id="fileInput" onChange={e => setImagenActual(e.target.files[0])} style={{ padding: '10px', color: '#888' }} />
-        
-        <button type="submit" style={{ background: '#0071e3', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-          {editandoId ? 'Actualizar' : 'Guardar'}
-        </button>
-        {editandoId && <button type="button" onClick={resetFormulario} style={{ background: '#444', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>}
-      </form>
+        <form onSubmit={guardarProducto} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Nombre */}
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="Nombre del Producto" 
+              required 
+              value={formulario.name} 
+              onChange={e => setFormulario({...formulario, name: e.target.value})} 
+              className="w-full h-14 bg-white/5 border border-white/10 rounded-[1.2rem] px-5 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all"
+            />
+          </div>
 
-      <div style={{ background: '#1d1d1f', borderRadius: '16px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', color: 'white' }}>
-          <thead>
-            <tr style={{ background: '#2c2c2e', textAlign: 'left' }}>
-              <th style={{ padding: '15px' }}>Imagen</th>
-              <th style={{ padding: '15px' }}>Producto</th>
-              <th style={{ padding: '15px' }}>Precio</th>
-              <th style={{ padding: '15px' }}>Stock</th>
-              <th style={{ padding: '15px', textAlign: 'center' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.map(p => (
-              <tr key={p.id} style={{ borderBottom: '1px solid #333' }}>
-                <td style={{ padding: '15px' }}>
-                    <img src={p.primary_image_url && !p.primary_image_url.includes('via.placeholder.com') ? p.primary_image_url : 'https://placehold.co/50x50/png?text=Sin+Imagen'} alt={p.name} style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '8px', background: 'white' }}/>
-                </td>
-                <td style={{ padding: '15px' }}><b>{p.name}</b><br/><small style={{color:'#888'}}>{p.category?.name}</small></td>
-                <td style={{ padding: '15px' }}>${p.price.toLocaleString()}</td>
-                <td style={{ padding: '15px' }}>{p.stock}</td>
-                <td style={{ padding: '15px', textAlign: 'center', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                  <button onClick={() => editarProducto(p)} style={{ background: '#ff9500', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}>Editar</button>
-                  <button onClick={() => eliminarProducto(p.id)} style={{ background: '#ff3b30', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer' }}>Borrar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          {/* Categoría */}
+          <div className="relative">
+            <select 
+              required 
+              value={formulario.category_id} 
+              onChange={e => setFormulario({...formulario, category_id: e.target.value})} 
+              className="w-full h-14 bg-white/5 border border-white/10 rounded-[1.2rem] px-5 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all appearance-none cursor-pointer"
+            >
+              <option value="" className="bg-pitch-black text-gray-500">Categoría</option>
+              {categorias.map(cat => (
+                <option key={cat.id} value={cat.id} className="bg-pitch-black text-white">{cat.name}</option>
+              ))}
+            </select>
+            <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</span>
+          </div>
+
+          {/* Precio */}
+          <div className="relative">
+            <input 
+              type="number" 
+              placeholder="Precio ($)" 
+              required 
+              value={formulario.price} 
+              onChange={e => setFormulario({...formulario, price: e.target.value})} 
+              className="w-full h-14 bg-white/5 border border-white/10 rounded-[1.2rem] px-5 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all"
+            />
+          </div>
+
+          {/* Stock */}
+          <div className="relative">
+            <input 
+              type="number" 
+              placeholder="Stock" 
+              required 
+              value={formulario.stock} 
+              onChange={e => setFormulario({...formulario, stock: e.target.value})} 
+              className="w-full h-14 bg-white/5 border border-white/10 rounded-[1.2rem] px-5 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all"
+            />
+          </div>
+
+          {/* Subir Imagen */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 flex items-center gap-4 bg-white/5 border border-dashed border-white/10 rounded-[1.2rem] px-5 h-14 relative group hover:border-white/20 transition-all overflow-hidden">
+            <Image size={18} className="text-gray-400 group-hover:text-urban-blue transition-colors" />
+            <span className="text-gray-400 text-sm font-semibold truncate">
+              {imagenActual ? imagenActual.name : "Subir Imagen del Producto"}
+            </span>
+            <input 
+              type="file" 
+              id="fileInput" 
+              onChange={e => setImagenActual(e.target.files[0])} 
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </div>
+
+          {/* Botones */}
+          <div className="col-span-1 flex gap-3 h-14">
+            {editandoId && (
+              <button 
+                type="button" 
+                onClick={resetFormulario} 
+                className="flex-1 rounded-[1.2rem] bg-white/5 border border-white/10 text-gray-400 font-bold hover:bg-white/10 hover:text-white transition-all text-sm flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <X size={16} /> Cancelar
+              </button>
+            )}
+            <button 
+              type="submit" 
+              className={`${editandoId ? 'flex-[1.5]' : 'w-full'} h-full rounded-[1.2rem] bg-urban-blue text-white font-black uppercase text-xs tracking-widest shadow-neon-blue hover:shadow-neon-glow hover:scale-[1.02] active:scale-100 transition-all flex items-center justify-center gap-2 cursor-pointer`}
+            >
+              {editandoId ? <Pencil size={14} /> : <Plus size={14} />}
+              {editandoId ? 'Actualizar' : 'Guardar'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* LISTA DE PRODUCTOS */}
+      <div className="glass-dark rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl">
+        {/* Header de la lista (oculto en mobile) */}
+        <div className="hidden md:flex items-center justify-between px-8 py-5 bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+          <div className="flex-1 flex items-center gap-4">
+            <span className="w-14 text-center">Imagen</span>
+            <span>Producto</span>
+          </div>
+          <div className="w-32 text-left">Precio</div>
+          <div className="w-24 text-left">Stock</div>
+          <div className="w-48 text-center">Acciones</div>
+        </div>
+
+        {/* Filas */}
+        <div className="divide-y divide-white/5">
+          {productos.map(p => (
+            <div key={p.id} className="flex flex-col md:flex-row md:items-center justify-between px-8 py-5 hover:bg-white/[0.02] transition-colors gap-4">
+              {/* Información */}
+              <div className="flex-1 flex items-center gap-5">
+                {/* Imagen del Producto */}
+                <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center p-1.5 border border-white/10 overflow-hidden shrink-0 shadow-inner">
+                  <img 
+                    src={p.primary_image_url && p.primary_image_url.trim() !== '' ? p.primary_image_url : 'https://placehold.co/100x100/000000/FFFFFF/png?text='} 
+                    alt={p.name} 
+                    onError={(e) => {
+                      const fallback = 'https://placehold.co/100x100/000000/FFFFFF/png?text=';
+                      if (e.target.src !== fallback) {
+                        e.target.src = fallback;
+                      }
+                    }}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+
+                {/* Textos del Producto */}
+                <div className="truncate">
+                  <h4 className="text-white font-bold text-base tracking-tight hover:text-urban-blue transition-colors truncate">{p.name}</h4>
+                  <p className="text-gray-500 font-bold uppercase tracking-wider text-[10px] mt-0.5">{p.category?.name || "Sin Categoría"}</p>
+                </div>
+              </div>
+
+              {/* Precio */}
+              <div className="w-full md:w-32 flex md:block items-center justify-between">
+                <span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Precio</span>
+                <span className="text-white font-black tracking-tight text-lg">${p.price.toLocaleString()}</span>
+              </div>
+
+              {/* Stock */}
+              <div className="w-full md:w-24 flex md:block items-center justify-between">
+                <span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Stock</span>
+                <span className={`font-bold text-sm px-3 py-1 rounded-full ${p.stock <= 3 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-white/5 text-gray-300 border border-white/5'}`}>
+                  {p.stock} {p.stock === 1 ? 'unidad' : 'unidades'}
+                </span>
+              </div>
+
+              {/* Acciones */}
+              <div className="w-full md:w-48 flex items-center justify-end gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-white/5 md:justify-center">
+                <button 
+                  onClick={() => editarProducto(p)}
+                  className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-xs uppercase tracking-widest hover:bg-amber-500/20 hover:text-amber-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Pencil size={12} />
+                  Editar
+                </button>
+                <button 
+                  onClick={() => eliminarProducto(p.id)}
+                  className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-bold text-xs uppercase tracking-widest hover:bg-red-500/20 hover:text-red-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 size={12} />
+                  Borrar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
-
-const inputStyle = {
-    flex: 1, 
-    minWidth: '150px', 
-    padding: '12px', 
-    borderRadius: '8px', 
-    border: 'none', 
-    background: '#2c2c2e', 
-    color: 'white', 
-    outline: 'none'
-};

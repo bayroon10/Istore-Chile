@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { Package } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import api from '../lib/api';
@@ -71,14 +72,19 @@ export default function MiCuenta() {
     setHistorial([]);
   };
 
-  // Colores de estado (Modernizados para Dark Theme)
+  // Colores semánticos de estado (design system Stitch)
   const statusColors = {
-    pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-500', border: 'border-yellow-500/30' },
-    paid: { bg: 'bg-urban-blue/20', text: 'text-urban-blue', border: 'border-urban-blue/30' },
-    processing: { bg: 'bg-orange-500/20', text: 'text-orange-500', border: 'border-orange-500/30' },
-    shipped: { bg: 'bg-purple-500/20', text: 'text-purple-500', border: 'border-purple-500/30' },
-    delivered: { bg: 'bg-green-500/20', text: 'text-green-500', border: 'border-green-500/30' },
-    cancelled: { bg: 'bg-red-500/20', text: 'text-red-500', border: 'border-red-500/30' },
+    pending:    'bg-amber-500/15 text-amber-400 border-amber-500/25',
+    pendiente:  'bg-amber-500/15 text-amber-400 border-amber-500/25',
+    paid:       'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+    pagado:     'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+    processing: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
+    shipped:    'bg-blue-500/15 text-blue-400 border-blue-500/25',
+    enviado:    'bg-blue-500/15 text-blue-400 border-blue-500/25',
+    delivered:  'bg-purple-500/15 text-purple-400 border-purple-500/25',
+    entregado:  'bg-purple-500/15 text-purple-400 border-purple-500/25',
+    cancelled:  'bg-red-500/15 text-red-400 border-red-500/25',
+    cancelado:  'bg-red-500/15 text-red-400 border-red-500/25',
   };
 
   // =========================================================
@@ -86,116 +92,132 @@ export default function MiCuenta() {
   // =========================================================
   if (isAuthenticated && user) {
     return (
-      <div className="min-h-screen bg-pitch-black p-6 md:p-12 font-sans relative overflow-hidden">
-        
-        {/* Glows de fondo */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-            <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-urban-blue/10 rounded-full blur-[150px]"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-urban-blue/5 rounded-full blur-[120px]"></div>
-        </div>
+      <div className="min-h-screen bg-pitch-black p-6 md:p-12 font-sans">
+        <div className="max-w-4xl mx-auto space-y-8">
 
-        <div className="max-w-5xl mx-auto relative z-10">
-          
-          {/* Header Dashboard */}
-          <div className="glass-dark p-8 md:p-12 rounded-[32px] border border-white/10 flex flex-col md:flex-row justify-between items-center gap-8 mb-12 shadow-2xl">
-            <div className="flex items-center gap-6 text-center md:text-left">
-              <div className="w-20 h-20 rounded-2xl bg-urban-blue flex items-center justify-center text-4xl shadow-neon-blue">
-                {user.name?.charAt(0).toUpperCase()}
+          {/* ── PROFILE HEADER ─────────────────────────────── */}
+          <div className="glass-dark rounded-[2.5rem] p-8 relative overflow-hidden">
+            {/* Blob decorativo estático */}
+            <div className="absolute -top-20 -right-20 w-[300px] h-[300px] bg-blue-500/5 blur-[80px] rounded-full pointer-events-none" />
+
+            <div className="relative flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
+              {/* Avatar + info */}
+              <div className="flex items-center gap-6">
+                <div
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl font-black text-white shrink-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #3b82f6, #22d3ee)',
+                    boxShadow: '0 0 0 2px rgba(59,130,246,0.3), 0 0 0 4px #000'
+                  }}
+                >
+                  {user.name?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none mb-2">
+                    {user.name}
+                  </h1>
+                  <p className="text-blue-400 text-sm uppercase tracking-[0.15em] font-bold">{user.email}</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl md:text-4xl font-black text-white mb-2 uppercase tracking-tight">Hola, {user.name}</h1>
-                <p className="text-urban-blue font-bold tracking-widest text-sm uppercase">{user.email}</p>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3 shrink-0">
+                <button
+                  onClick={() => navigate('/tienda')}
+                  className="px-5 py-2.5 rounded-2xl glass border border-white/10 text-white text-sm font-black uppercase tracking-widest hover:border-blue-500/30 transition-all"
+                >
+                  ← Tienda
+                </button>
+                <button
+                  onClick={cerrarSesion}
+                  className="px-5 py-2.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-black uppercase tracking-widest hover:bg-red-500/20 transition-all"
+                >
+                  Cerrar Sesión
+                </button>
               </div>
-            </div>
-            
-            <div className="flex flex-wrap justify-center gap-4">
-              <button 
-                onClick={() => navigate('/tienda')} 
-                className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-all">
-                Ir a la Tienda
-              </button>
-              <button 
-                onClick={cerrarSesion} 
-                className="px-6 py-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-500 font-bold hover:bg-red-500/30 transition-all">
-                Cerrar Sesión
-              </button>
             </div>
           </div>
 
-          {/* Historial Section */}
-          <div className="mb-8 flex items-center justify-between">
+          {/* ── MIS PEDIDOS ────────────────────────────────── */}
+          <div className="flex items-center justify-between">
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-               <span className="text-urban-blue">📦</span> Mis Pedidos
-               <span className="bg-urban-blue/10 text-urban-blue text-xs px-3 py-1 rounded-full border border-urban-blue/20 ml-2">
-                 {historial.length}
-               </span>
+              Mis Pedidos
+              <span className="bg-blue-500/10 text-blue-400 text-xs px-3 py-1 rounded-full border border-blue-500/20">
+                {historial.length}
+              </span>
             </h2>
           </div>
-          
+
           {loadingOrders ? (
-            <div className="glass-dark rounded-[24px] border border-white/5 p-20 text-center text-gray-500 animate-pulse text-xl font-bold uppercase tracking-widest">
-              Analizando historial...
+            <div className="glass-dark rounded-[2rem] p-16 text-center">
+              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-gray-600 text-xs font-black uppercase tracking-widest">Cargando pedidos...</p>
             </div>
           ) : historial.length === 0 ? (
-            <div className="glass-dark rounded-[24px] border border-white/5 p-20 text-center relative overflow-hidden">
-                <div className="text-6xl mb-6 opacity-30 grayscale">🛒</div>
-                <p className="text-gray-400 text-lg font-medium mb-8">Tu inventario personal está vacío.</p>
-                <button 
-                  onClick={() => navigate('/tienda')}
-                  className="bg-urban-blue text-white px-10 py-4 rounded-2xl font-black shadow-neon-blue hover:scale-105 transition-all">
-                  INICIAR COMPRAS ➔
-                </button>
+            <div className="glass-dark rounded-[2rem] p-20 text-center">
+              <Package size={48} className="text-gray-700 mb-4 mx-auto" />
+              <p className="text-gray-500 font-bold mb-8">Aún no realizas ningún pedido</p>
+              <a
+                href="/"
+                className="inline-block px-8 py-4 rounded-2xl bg-blue-500 text-white font-black uppercase text-sm tracking-widest hover:shadow-neon-blue transition-all"
+              >
+                Ir al Catálogo →
+              </a>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-6">
               {historial.map(order => {
-                const colors = statusColors[order.status] || statusColors.pending;
+                const badge = statusColors[order.status] || statusColors.pending;
                 return (
-                  <div key={order.id} className="glass-dark rounded-[24px] border border-white/10 p-6 md:p-8 hover:border-urban-blue/30 transition-all duration-500 group shadow-lg">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${colors.bg} ${colors.text} ${colors.border}`}>
+                  <div key={order.id} className="glass-dark rounded-[2rem] p-6 space-y-4 hover:border-blue-500/20 transition-all duration-300">
+                    {/* Order header */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                      <div className="space-y-1">
+                        <span className="font-mono text-xs text-gray-500">#{order.order_number}</span>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${badge}`}>
                             {order.status_label}
                           </span>
-                          <span className="text-gray-500 text-xs font-bold font-mono">#{order.order_number}</span>
+                          <span className="text-gray-600 text-xs">
+                            {new Date(order.created_at).toLocaleDateString('es-CL', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </span>
                         </div>
-                        <p className="text-gray-400 text-sm font-medium">
-                          {new Date(order.created_at).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                        </p>
                       </div>
-                      
-                      <div className="text-left md:text-right">
-                        <p className="text-3xl font-black text-white tracking-tighter group-hover:text-urban-blue transition-colors">
-                            ${order.total?.toLocaleString()}
-                        </p>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">
-                            Envío: {order.shipping?.method || 'N/A'}
-                        </p>
-                      </div>
+                      <p className="text-2xl font-black text-white tracking-tighter">
+                        ${Number(order.total).toLocaleString()}
+                      </p>
                     </div>
 
-                    {/* Detalle de Productos */}
-                    <div className="space-y-4 pt-6 border-t border-white/5">
-                      {order.items?.map(item => (
-                        <div key={item.id} className="flex items-center gap-4 bg-white/5 p-3 rounded-2xl border border-transparent hover:border-white/10 transition-all">
-                          <div className="w-14 h-14 bg-black rounded-xl p-2 flex items-center justify-center border border-white/5">
-                            {item.product_image ? (
-                              <img src={item.product_image && !item.product_image.includes('via.placeholder.com') ? item.product_image : 'https://placehold.co/50x50/png?text=Item'} alt={item.product_name} className="w-full h-full object-contain" />
-                            ) : (
-                              <span className="text-xl"></span>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-white text-sm font-bold truncate max-w-[200px] md:max-w-md">{item.product_name}</h4>
-                            <p className="text-gray-500 text-xs font-bold">CANTIDAD: {item.quantity}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white text-sm font-black font-mono">${item.subtotal?.toLocaleString()}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    {/* Items */}
+                    {order.items?.length > 0 && (
+                      <div className="space-y-3 pt-4 border-t border-white/5">
+                        {order.items.map(item => {
+                          const imgSrc = item.product_image && !item.product_image.includes('via.placeholder.com')
+                            ? item.product_image
+                            : `https://placehold.co/40x40/0a0a0a/3b82f6?text=${encodeURIComponent((item.product_name || 'i').slice(0,2))}`;
+                          const imgFallback = 'https://placehold.co/40x40/000/3b82f6?text=i';
+                          return (
+                            <div key={item.id} className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center shrink-0 overflow-hidden">
+                                <img
+                                  src={imgSrc}
+                                  onError={e => { if (e.target.src !== imgFallback) e.target.src = imgFallback; }}
+                                  alt={item.product_name}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white text-sm font-bold truncate">{item.product_name}</p>
+                                <p className="text-gray-600 text-xs">× {item.quantity}</p>
+                              </div>
+                              <p className="text-white text-sm font-black font-mono shrink-0">
+                                ${Number(item.subtotal).toLocaleString()}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -243,40 +265,40 @@ export default function MiCuenta() {
         <form onSubmit={manejarSubmit} className="space-y-5">
           {modo === 'registro' && (
             <div className="group">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-urban-blue transition-colors">Nombre Real</label>
-              <input 
-                type="text" 
-                placeholder="EJ: Bairon Doe" 
-                required 
-                value={formulario.name} 
-                onChange={e => setFormulario({...formulario, name: e.target.value})} 
-                className="w-full p-4 rounded-2xl bg-black/40 border border-white/5 text-white placeholder:text-gray-700 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all"
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Nombre Real</label>
+              <input
+                type="text"
+                placeholder="EJ: Bairon Doe"
+                required
+                value={formulario.name}
+                onChange={e => setFormulario({...formulario, name: e.target.value})}
+                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-white placeholder:text-gray-700 focus:border-blue-500/50 outline-none transition-all"
               />
             </div>
           )}
-          
+
           <div className="group">
-            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-urban-blue transition-colors">Identidad Electrónica</label>
-            <input 
-              type="email" 
-              placeholder="correo@istore.cl" 
-              required 
-              value={formulario.email} 
-              onChange={e => setFormulario({...formulario, email: e.target.value})} 
-              className="w-full p-4 rounded-2xl bg-black/40 border border-white/5 text-white placeholder:text-gray-700 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all"
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Identidad Electrónica</label>
+            <input
+              type="email"
+              placeholder="correo@istore.cl"
+              required
+              value={formulario.email}
+              onChange={e => setFormulario({...formulario, email: e.target.value})}
+              className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-white placeholder:text-gray-700 focus:border-blue-500/50 outline-none transition-all"
             />
           </div>
 
           <div className="group">
-            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-urban-blue transition-colors">Código de Seguridad</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              required 
-              minLength="6" 
-              value={formulario.password} 
-              onChange={e => setFormulario({...formulario, password: e.target.value})} 
-              className="w-full p-4 rounded-2xl bg-black/40 border border-white/5 text-white placeholder:text-gray-700 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all"
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Código de Seguridad</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              required
+              minLength="6"
+              value={formulario.password}
+              onChange={e => setFormulario({...formulario, password: e.target.value})}
+              className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-white placeholder:text-gray-700 focus:border-blue-500/50 outline-none transition-all"
             />
           </div>
           

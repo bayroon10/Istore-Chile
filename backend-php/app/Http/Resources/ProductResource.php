@@ -25,7 +25,7 @@ class ProductResource extends JsonResource
             'stock' => $this->stock,
             'is_active' => (bool) $this->is_active,
             'category' => new CategoryResource($this->whenLoaded('category')),
-            'primary_image_url' => $this->primary_image_url,
+            'primary_image_url' => $this->primaryImage?->image_url ?? null,
             'images' => $this->whenLoaded('images', function() {
                 return $this->images->map(fn($img) => [
                     'id' => $img->id,

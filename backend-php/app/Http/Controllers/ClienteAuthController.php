@@ -13,7 +13,7 @@ class ClienteAuthController extends Controller
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users',
-            'password' => 'required|min:6',
+            'password' => ['required', 'string', \Illuminate\Validation\Rules\Password::min(8)->numbers()],
         ]);
 
         $user = User::create([
@@ -69,11 +69,23 @@ class ClienteAuthController extends Controller
     {
         $user = $request->user();
 
-        // El historial de compras se reincorporará en la Fase 1 Paso 2
-        // cuando tengamos los modelos Order y OrderItem
+        $historial = \App\Models\Order::where('user_id', $user->id)
+            ->withCount('items')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(fn($order) => [
+                'id'             => $order->id,
+                'total'          => (float) $order->total,
+                'status'         => $order->status,
+                'created_at'     => $order->created_at->toDateTimeString(),
+                'items_count'    => $order->items_count,
+                'cantidad_items' => $order->items_count,
+            ]);
+
         return response()->json([
-            'user'             => $user,
-            'historial_compras' => [],
+            'user'              => $user,
+            'historial_compras' => $historial,
         ]);
     }
 

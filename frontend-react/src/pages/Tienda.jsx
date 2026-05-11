@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Swal from 'sweetalert2'
 import CheckoutForm from '../components/CheckoutForm';
 import { useCart } from '../contexts/CartContext';
@@ -6,13 +6,13 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/api';
 import Footer from '../components/Footer';
 import { useDebounce } from '../hooks/useDebounce';
+import { useStaggerReveal } from '../hooks/useStaggerReveal';
 
 // 🌟 Stripe
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 export default function Tienda() {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -25,6 +25,12 @@ export default function Tienda() {
   const [pagina, setPagina] = useState(1);
   const [hayMas, setHayMas] = useState(true);
   const [cargando, setCargando] = useState(false);
+
+  // Estado por card: null | 'loading' | 'success' | 'error'
+  const [cardStates, setCardStates] = useState({});
+
+  // Stagger reveal para el grid de productos
+  const gridRef = useStaggerReveal(60);
 
   const debouncedSearch = useDebounce(busqueda, 500);
 
@@ -53,7 +59,7 @@ export default function Tienda() {
       if (categoriaActiva !== 'Todas') endpoint += `&category=${encodeURIComponent(categoriaActiva)}`;
 
       const res = await api.get(endpoint);
-      
+
       const nuevosProductos = res.data || [];
       const meta = res.meta || {};
 
@@ -90,35 +96,23 @@ export default function Tienda() {
   };
 
   const agregarAlCarrito = async (producto) => {
-    const result = await addItem(producto.id);
+    const pid = producto.id;
+    setCardStates(prev => ({ ...prev, [pid]: 'loading' }));
+    const result = await addItem(pid);
     if (!result.success) {
+      setCardStates(prev => ({ ...prev, [pid]: 'error' }));
+      setTimeout(() => setCardStates(prev => ({ ...prev, [pid]: null })), 1500);
       Swal.fire({
         title: 'Error',
         text: result.error,
         icon: 'warning',
         background: '#000',
         color: '#fff',
-        confirmButtonColor: '#0071e3'
+        confirmButtonColor: '#3b82f6'
       });
     } else {
-      // Toast moderno
-      const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-        background: '#1d1d1f',
-        color: '#fff',
-        didOpen: (toast) => {
-          toast.addEventListener('mouseenter', Swal.stopTimer)
-          toast.addEventListener('mouseleave', Swal.resumeTimer)
-        }
-      });
-      Toast.fire({
-        icon: 'success',
-        title: `${producto.name} añadido`
-      });
+      setCardStates(prev => ({ ...prev, [pid]: 'success' }));
+      setTimeout(() => setCardStates(prev => ({ ...prev, [pid]: null })), 1500);
     }
   };
 
@@ -194,13 +188,13 @@ export default function Tienda() {
             disabled={items.length === 0}
             onClick={() => {
               if (!isAuthenticated) {
-                Swal.fire({ 
-                  title: 'Inicia Sesión', 
-                  text: 'Debes estar autenticado para comprar.', 
-                  icon: 'info', 
+                Swal.fire({
+                  title: 'Inicia Sesión',
+                  text: 'Debes estar autenticado para comprar.',
+                  icon: 'info',
                   background: '#000',
                   color: '#fff',
-                  confirmButtonColor: '#0071e3' 
+                  confirmButtonColor: '#0071e3'
                 }).then(() => window.location.href = '/mi-cuenta');
                 return;
               }
@@ -234,29 +228,72 @@ export default function Tienda() {
       {/* 🌃 CONTENIDO PRINCIPAL */}
       <div className="max-w-7xl mx-auto px-6 lg:px-10 space-y-24">
 
-        {/* ⚡ HERO BANNER SPECTACULAR */}
-        <section className="relative h-[80vh] min-h-[500px] flex items-center justify-center overflow-hidden rounded-[3rem] mt-4">
-          <div className="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?q=80&w=2070" className="w-full h-full object-cover grayscale brightness-[0.3]" alt="" />
-            <div className="absolute inset-0 bg-gradient-to-t from-pitch-black via-transparent to-transparent"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-pitch-black/80 via-transparent to-pitch-black/80"></div>
+        {/* ⚡ HERO BANNER — AURORA MESH */}
+        <section className="relative h-[90vh] min-h-[560px] flex items-center justify-center overflow-hidden rounded-[3rem] mt-4 bg-pitch-black">
+
+          {/* Aurora blobs — layer 1 */}
+          <div className="absolute pointer-events-none" style={{
+            width: 700, height: 700,
+            top: -200, left: -100,
+            background: 'rgba(59,130,246,0.10)',
+            borderRadius: '50%',
+            filter: 'blur(120px)',
+            animation: 'float-1 12s ease-in-out infinite'
+          }} />
+          {/* Aurora blobs — layer 2 */}
+          <div className="absolute pointer-events-none" style={{
+            width: 400, height: 400,
+            bottom: -100, right: 0,
+            background: 'rgba(34,211,238,0.08)',
+            borderRadius: '50%',
+            filter: 'blur(80px)',
+            animation: 'float-2 9s ease-in-out infinite reverse'
+          }} />
+          {/* Aurora blobs — layer 3 */}
+          <div className="absolute pointer-events-none" style={{
+            width: 300, height: 300,
+            top: '30%', right: '20%',
+            background: 'rgba(99,102,241,0.08)',
+            borderRadius: '50%',
+            filter: 'blur(60px)',
+            animation: 'float-3 15s ease-in-out infinite'
+          }} />
+
+          {/* Grain texture SVG overlay */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{ zIndex: 1 }}>
+            <svg width="100%" height="100%">
+              <filter id="grain">
+                <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+                <feColorMatrix type="saturate" values="0" />
+              </filter>
+              <rect width="100%" height="100%" filter="url(#grain)" />
+            </svg>
           </div>
 
-          <div className="relative z-10 text-center px-4 max-w-3xl animate-in fade-in slide-in-from-bottom-10 duration-1000">
-            <span className="inline-block px-4 py-1 rounded-full glass border border-urban-blue/30 text-urban-blue text-xs font-black tracking-[0.3em] uppercase mb-6 shadow-neon-blue">
-              Nueva Colección 2026
+          {/* Bottom fade to black */}
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-pitch-black to-transparent pointer-events-none" style={{ zIndex: 2 }} />
+
+          <div className="relative text-center px-4 max-w-3xl" style={{ zIndex: 3 }}>
+            <span className="inline-block px-4 py-1.5 rounded-full glass border border-blue-500/30 text-blue-400 text-[10px] font-black tracking-[0.3em] uppercase mb-8 shadow-neon-blue">
+              NUEVA COLECCIÓN 2026
             </span>
-            <h1 className="text-6xl md:text-8xl font-black text-white leading-none mb-6 tracking-tighter">
-              TECH-WEAR <span className="text-transparent bg-clip-text bg-gradient-to-r from-urban-blue to-cyan-400">PRO.</span>
+            <h1 className="text-7xl md:text-9xl font-black text-white leading-none mb-6" style={{ letterSpacing: '-0.04em' }}>
+              TECH-WEAR{' '}
+              <span style={{
+                background: 'linear-gradient(to right, #3b82f6, #22d3ee)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>PRO.</span>
             </h1>
             <p className="text-gray-400 text-lg md:text-xl font-medium mb-10 max-w-xl mx-auto">
               Equipamiento táctico para tu ecosistema digital. Diseñado para los que no se detienen.
             </p>
-            <button onClick={() => {
-              const el = document.getElementById('catalogo');
-              el?.scrollIntoView({ behavior: 'smooth' });
-            }} className="px-10 py-5 bg-urban-blue rounded-[1.2rem] text-white font-black uppercase text-sm tracking-[0.2em] shadow-neon-blue hover:shadow-neon-glow hover:-translate-y-1 transition-all duration-300">
-              Explorar Catálogo
+            <button
+              onClick={() => document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' })}
+              className="px-10 py-5 bg-white text-black rounded-[1.2rem] font-black uppercase text-sm tracking-[0.2em] hover:bg-blue-500 hover:text-white hover:shadow-neon-blue active:scale-95 transition-all duration-300"
+            >
+              EXPLORAR CATÁLOGO →
             </button>
           </div>
         </section>
@@ -322,39 +359,77 @@ export default function Tienda() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {productos.map(p => (
-                  <div
-                    key={p.id}
-                    className="glass-dark group relative rounded-[2.5rem] p-8 flex flex-col h-[460px] transition-smooth hover:-translate-y-2 hover:shadow-neon-glow hover:border-urban-blue/20"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="text-[10px] font-black tracking-[0.2em] text-urban-blue px-3 py-1 rounded-full glass border border-urban-blue/20 uppercase">
-                        {p.category?.name || 'GENERIC'}
-                      </span>
-                      <span className="text-xl font-black tracking-tighter">$ {p.price.toLocaleString()}</span>
-                    </div>
+              <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {productos.map(p => {
+                  const cs = cardStates[p.id] || null;
+                  const agotado = p.stock === 0;
+                  const fb = `https://placehold.co/600x600/000000/3b82f6?text=${encodeURIComponent((p.name || 'iStore').slice(0, 8))}`;
+                  const fallbackFinal = 'https://placehold.co/600x600/0a0a0a/3b82f6?text=iStore';
+                  return (
+                    <div
+                      key={p.id}
+                      data-stagger
+                      className="glass-dark group relative rounded-[2.5rem] p-7 flex flex-col h-[460px] transition-smooth hover:-translate-y-2 hover:shadow-neon-glow hover:border-blue-500/20"
+                    >
+                      {/* Agotado overlay */}
+                      {agotado && (
+                        <div className="absolute inset-0 z-10 bg-black/60 rounded-[2.5rem] flex items-center justify-center">
+                          <span className="text-[10px] font-black tracking-widest text-red-400 border border-red-500/30 bg-red-500/10 px-4 py-1.5 rounded-full uppercase">
+                            AGOTADO
+                          </span>
+                        </div>
+                      )}
 
-                    <div className="flex-1 flex items-center justify-center p-4 relative group-hover:scale-110 transition-transform duration-700">
-                      <div className="absolute inset-0 bg-urban-blue/5 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <img
-                        src={p.primary_image_url && !p.primary_image_url.includes('via.placeholder.com') ? p.primary_image_url : "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=800"}
-                        alt=""
-                        className="max-h-full max-w-full drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                      />
-                    </div>
+                      {/* Badge categoría + precio */}
+                      <div className="flex justify-between items-start mb-4">
+                        <span className="text-[9px] font-black tracking-[0.25em] text-blue-400 px-3 py-1 rounded-full glass border border-blue-500/20 uppercase">
+                          {p.category?.name || 'TECH'}
+                        </span>
+                        <div className="text-right">
+                          {p.compare_price > 0 && (
+                            <span className="block text-xs text-gray-600 line-through">
+                              ${Number(p.compare_price).toLocaleString()}
+                            </span>
+                          )}
+                          <span className="text-lg font-black tracking-tighter">$ {Number(p.price).toLocaleString()}</span>
+                        </div>
+                      </div>
 
-                    <div className="mt-6">
-                      <h3 className="text-xl font-black text-white leading-tight mb-6 line-clamp-2">{p.name}</h3>
-                      <button
-                        onClick={() => agregarAlCarrito(p)}
-                        className="w-full py-4 rounded-2xl bg-white text-black font-black uppercase text-xs tracking-widest hover:bg-urban-blue hover:text-white transition-all duration-300"
-                      >
-                        Añadir a la Bolsa
-                      </button>
+                      {/* Imagen */}
+                      <div className="flex-1 flex items-center justify-center p-4 relative">
+                        <div className="absolute inset-0 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.10) 0%, transparent 70%)' }} />
+                        <img
+                          src={p.primary_image_url && p.primary_image_url.trim() !== '' ? p.primary_image_url : fb}
+                          onError={(e) => { if (e.target.src !== fallbackFinal) e.target.src = fallbackFinal; }}
+                          alt={p.name}
+                          loading="lazy"
+                          className="max-h-full max-w-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+
+                      {/* Nombre + botón */}
+                      <div className="mt-5">
+                        <h3 className="text-base font-black text-white leading-tight mb-4 line-clamp-2">{p.name}</h3>
+                        <button
+                          onClick={() => !agotado && cs === null && agregarAlCarrito(p)}
+                          disabled={agotado || cs === 'loading'}
+                          className={[
+                            'w-full py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all duration-300 flex items-center justify-center gap-2',
+                            agotado ? 'opacity-50 grayscale cursor-not-allowed bg-white text-black' :
+                            cs === 'success' ? 'bg-emerald-500 text-white' :
+                            cs === 'error'   ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-shake' :
+                            cs === 'loading' ? 'bg-white/10 text-gray-400 cursor-not-allowed' :
+                            'bg-white text-black hover:bg-blue-500 hover:text-white hover:shadow-neon-blue'
+                          ].join(' ')}
+                        >
+                          {cs === 'loading' && <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />}
+                          {cs === 'success' ? '✓ AÑADIDO' : cs === 'loading' ? 'AÑADIENDO...' : cs === 'error' ? 'ERROR — REINTENTAR' : 'AÑADIR A LA BOLSA'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* ⚡ LOAD MORE BUTTON (TECH-STYLE) */}
@@ -378,7 +453,7 @@ export default function Tienda() {
                     </span>
                   </button>
                 )}
-                
+
                 {!hayMas && productos.length > 0 && (
                   <p className="text-gray-600 font-bold text-xs uppercase tracking-[0.4em] animate-pulse">
                     Catálogo Completo — Fin de la Transmisión

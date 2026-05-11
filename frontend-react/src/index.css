@@ -67,3 +67,74 @@
 .transition-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ── SHADOW UTILITIES ──────────────────────────────────────────────── */
+@utility shadow-neon-blue {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+}
+
+@utility shadow-neon-glow {
+  box-shadow: 0 0 60px rgba(59, 130, 246, 0.2);
+}
+
+/* ── STAGGER REVEAL SYSTEM ─────────────────────────────────────────── */
+[data-stagger] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-stagger].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── AURORA BLOB KEYFRAMES ─────────────────────────────────────────── */
+@keyframes float-1 {
+  0%,  100% { transform: translate(0, 0) scale(1); }
+  33%        { transform: translate(60px, -40px) scale(1.1); }
+  66%        { transform: translate(-30px, 30px) scale(0.95); }
+}
+
+@keyframes float-2 {
+  0%,  100% { transform: translate(0, 0) scale(1); }
+  50%        { transform: translate(-50px, 30px) scale(1.08); }
+}
+
+@keyframes float-3 {
+  0%,  100% { transform: translate(0, 0) scale(1); }
+  40%        { transform: translate(40px, -60px) scale(1.05); }
+  80%        { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+/* ── CARD BUTTON FEEDBACK ──────────────────────────────────────────── */
+@keyframes shake {
+  0%,  100% { transform: translateX(0); }
+  20%,  60% { transform: translateX(-4px); }
+  40%,  80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* ── DASHBOARD SYNC DOT ────────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%,  100% { transform: scale(1);   opacity: 1; }
+  50%        { transform: scale(1.4); opacity: 0.7; }
+}
+
+/* ── NAVBAR CART BADGE FLIP ─────────────────────────────────────────── */
+@keyframes flip-number {
+  0%   { transform: rotateX(90deg); opacity: 0; }
+  100% { transform: rotateX(0deg);  opacity: 1; }
+}
+
+/* ── REDUCED MOTION OVERRIDE ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

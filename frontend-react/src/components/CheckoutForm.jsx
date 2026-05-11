@@ -13,7 +13,9 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
     nombre: '',
     email: '',
     direccion: '',
-    ciudad: ''
+    ciudad: '',
+    telefono: '',
+    region: 'Metropolitana'
   });
 
   const [shippingMethod, setShippingMethod] = useState('Starken');
@@ -35,13 +37,13 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
         shipping_email: datos.email,
         shipping_street: datos.direccion,
         shipping_city: datos.ciudad,
-        shipping_region: 'Metropolitana', // Default
-        shipping_phone: '999999999',     // Placeholder
+        shipping_region: datos.region,
+        shipping_phone: datos.telefono,
         shipping_method: shippingMethod
       });
 
-      const { client_secret, order_id } = response.data;
-
+      const { client_secret, data } = response.data;
+      const order_id = data?.id;
       // 2. Confirmar pago con Stripe
       const result = await stripe.confirmCardPayment(client_secret, {
         payment_method: {
@@ -97,6 +99,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
         {[
           { label: 'Nombre Completo', name: 'nombre', type: 'text', placeholder: ' ' },
           { label: 'Correo Electrónico', name: 'email', type: 'email', placeholder: ' ' },
+          { label: 'Teléfono de Contacto (9 dígitos)', name: 'telefono', type: 'tel', placeholder: ' ', pattern: '[0-9]{9}' },
           { label: 'Dirección de Envío', name: 'direccion', type: 'text', placeholder: ' ' },
           { label: 'Ciudad', name: 'ciudad', type: 'text', placeholder: ' ' }
         ].map((field) => (
@@ -108,6 +111,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
               value={datos[field.name]}
               onChange={handleChange}
               placeholder={field.placeholder}
+              pattern={field.pattern}
               className="peer w-full h-14 bg-carbon-grey/40 border border-white/5 rounded-[1.2rem] px-5 pt-4 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all"
             />
             <label className="absolute left-5 top-4 text-gray-500 text-sm font-bold uppercase tracking-widest pointer-events-none transition-all duration-300 peer-focus:-top-1 peer-focus:left-4 peer-focus:text-[10px] peer-focus:text-urban-blue peer-[:not(:placeholder-shown)]:-top-1 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-urban-blue">
@@ -115,6 +119,38 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
             </label>
           </div>
         ))}
+
+        {/* Región con dropdown */}
+        <div className="relative group">
+          <select
+            required
+            name="region"
+            value={datos.region}
+            onChange={handleChange}
+            className="w-full h-14 bg-carbon-grey/40 border border-white/5 rounded-[1.2rem] px-5 pt-4 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all appearance-none cursor-pointer"
+          >
+            <option value="Arica y Parinacota" className="bg-space-grey">Arica y Parinacota</option>
+            <option value="Tarapacá" className="bg-space-grey">Tarapacá</option>
+            <option value="Antofagasta" className="bg-space-grey">Antofagasta</option>
+            <option value="Atacama" className="bg-space-grey">Atacama</option>
+            <option value="Coquimbo" className="bg-space-grey">Coquimbo</option>
+            <option value="Valparaíso" className="bg-space-grey">Valparaíso</option>
+            <option value="Metropolitana" className="bg-space-grey">Metropolitana</option>
+            <option value="O'Higgins" className="bg-space-grey">O'Higgins</option>
+            <option value="Maule" className="bg-space-grey">Maule</option>
+            <option value="Ñuble" className="bg-space-grey">Ñuble</option>
+            <option value="Biobío" className="bg-space-grey">Biobío</option>
+            <option value="Araucanía" className="bg-space-grey">Araucanía</option>
+            <option value="Los Ríos" className="bg-space-grey">Los Ríos</option>
+            <option value="Los Lagos" className="bg-space-grey">Los Lagos</option>
+            <option value="Aysén" className="bg-space-grey">Aysén</option>
+            <option value="Magallanes" className="bg-space-grey">Magallanes</option>
+          </select>
+          <label className="absolute left-5 top-1.5 text-[9px] text-urban-blue font-bold uppercase tracking-widest pointer-events-none transition-all duration-300">
+            Región de Envío
+          </label>
+          <span className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</span>
+        </div>
       </div>
 
       {/* MÉTODO DE ENVÍO (SINCRONIZADO CON BACKEND) */}

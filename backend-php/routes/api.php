@@ -23,14 +23,14 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{idOrSlug}', [ProductController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index']);
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/webhooks/stripe', [WebhookController::class, 'handle']);
 
 // Rate limiting: 30 mensajes/minuto por IP — protege costos de Gemini API
 Route::post('/chatbot', [ChatbotController::class, 'chat'])->middleware('throttle:30,1');
 
 Route::post('/cliente/registro', [ClienteAuthController::class, 'registro']);
-Route::post('/cliente/login', [ClienteAuthController::class, 'login']);
+Route::post('/cliente/login', [ClienteAuthController::class, 'login'])->middleware('throttle:5,1');
 
 // =============================================
 // 🛒 CARRITO (Autenticado - Temporalmente para el test)

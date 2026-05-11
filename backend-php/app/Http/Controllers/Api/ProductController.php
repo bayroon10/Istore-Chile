@@ -26,7 +26,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::query()
-            ->with(['category', 'images'])
+            ->with(['category', 'images', 'primaryImage'])
             ->whereRaw('is_active = true');
 
         // Búsqueda por nombre (Database Agnostic: Case Insensitive en MySQL/Postgres)
@@ -90,7 +90,7 @@ class ProductController extends Controller
      */
     public function show(string $idOrSlug)
     {
-        $product = Product::with(['category', 'images'])
+        $product = Product::with(['category', 'images', 'primaryImage'])
             ->where('id', $idOrSlug)
             ->orWhere('slug', $idOrSlug)
             ->firstOrFail();

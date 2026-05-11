@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { AlertTriangle, Smartphone, DollarSign } from 'lucide-react';
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { DollarSign, ShoppingBag, Package, BarChart2, Monitor } from 'lucide-react';
 import api from '../lib/api';
+import { useCountUp } from '../hooks/useCountUp';
 
 export default function Dashboard() {
   const [productos, setProductos] = useState([]);
@@ -39,6 +40,30 @@ export default function Dashboard() {
   const productosBajoStock = productos.filter(p => p.stock <= 5 && p.stock > 0);
   const productosAgotados = productos.filter(p => p.stock === 0);
 
+  // Animated progress width for Bodega bars
+  const [progressWidths, setProgressWidths] = useState({});
+  useEffect(() => {
+    if (productos.length === 0) return;
+    const t = setTimeout(() => {
+      const widths = {};
+      [...productosAgotados, ...productosBajoStock].forEach(p => {
+        widths[p.id] = Math.min(100, (p.stock / 10) * 100);
+      });
+      setProgressWidths(widths);
+    }, 100);
+    return () => clearTimeout(t);
+  }, [productos]);
+
+  // Sync tooltip
+  const [showSync, setShowSync] = useState(false);
+
+  // Count-up values (live data)
+  const revCount   = useCountUp(estadisticas.kpis.total_revenue  || 0, 1200, !cargando);
+  const ordCount   = useCountUp(estadisticas.kpis.total_orders   || 0, 1200, !cargando);
+  const pendCount  = useCountUp(estadisticas.kpis.pending_orders || 0, 1200, !cargando);
+  const stockCount = useCountUp(estadisticas.kpis.low_stock_alerts || 0, 1200, !cargando);
+  const capCount   = useCountUp(capitalInvertido, 1200, !cargando);
+
   if (cargando) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-urban-blue">
@@ -56,65 +81,82 @@ export default function Dashboard() {
           <h2 className="text-4xl font-black tracking-tighter text-white">CENTRAL DE MANDO <span className="text-urban-blue"></span></h2>
           <p className="text-gray-500 text-sm font-bold uppercase tracking-widest mt-2">Métricas en tiempo real — iStore Chile Hub.</p>
         </div>
-        <div className="flex items-center gap-2 glass px-4 py-2 rounded-full border-white/5">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <div
+          className="relative flex items-center gap-2 glass px-4 py-2 rounded-full border-white/5 cursor-default"
+          onMouseEnter={() => setShowSync(true)}
+          onMouseLeave={() => setShowSync(false)}
+        >
+          <div className="w-2 h-2 bg-emerald-400 rounded-full" style={{ animation: 'pulse-dot 2s ease-in-out infinite' }} />
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sincronizado</span>
+          {showSync && (
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 glass-dark border border-white/10 text-[10px] text-gray-400 px-3 py-1.5 rounded-xl whitespace-nowrap shadow-lg z-10">
+              Última sync: hace 30s
+            </div>
+          )}
         </div>
       </header>
 
-      {/* 🌟 KPI CARDS (TECH-WEAR STYLE) */}
+      {/* 🌟 KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
 
-        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-green-500 group hover:border-urban-blue transition-all duration-500 flex flex-col justify-between">
+        {/* Ingresos Totales */}
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-emerald-500 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
+          <DollarSign size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Ingresos Totales</p>
-            <h3 className="text-2xl font-black text-white tracking-tighter group-hover:scale-105 transition-transform origin-left">
-              ${(estadisticas.kpis.total_revenue || 0).toLocaleString()}
-            </h3>
+            <h3 className="text-2xl font-black text-white tracking-tighter">${revCount.toLocaleString()}</h3>
           </div>
         </div>
 
-        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-urban-blue transition-all duration-500 flex flex-col justify-between">
+        {/* Volumen Histórico */}
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-blue-500 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
+          <ShoppingBag size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Volumen Histórico</p>
-            <h3 className="text-2xl font-black text-white tracking-tighter">
-              {estadisticas.kpis.total_orders || 0}
-            </h3>
+            <h3 className="text-2xl font-black text-white tracking-tighter">{ordCount}</h3>
           </div>
         </div>
 
-        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-orange-500 transition-all duration-500 flex flex-col justify-between">
+        {/* Órdenes Pendientes */}
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-amber-500 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
+          <Package size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Órdenes Pendientes</p>
-            <h3 className="text-2xl font-black text-white tracking-tighter">
-              {estadisticas.kpis.pending_orders || 0}
-            </h3>
+            <h3 className="text-2xl font-black text-white tracking-tighter">{pendCount}</h3>
           </div>
         </div>
 
-        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-red-500 transition-all duration-500 flex flex-col justify-between">
+        {/* Stock Crítico */}
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-red-500 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
+          <BarChart2 size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Stock Crítico</p>
-            <h3 className="text-2xl font-black text-white tracking-tighter">
-              {estadisticas.kpis.low_stock_alerts || 0}
+            <h3 className="text-2xl font-black text-white tracking-tighter">{stockCount}</h3>
+          </div>
+        </div>
+
+        {/* Ingresos BI Semanal — hardcoded */}
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-emerald-400 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
+          <DollarSign size={40} className="absolute top-4 right-4 text-white opacity-20" />
+          <div>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Ingresos BI Semanal</p>
+            <h3 className="text-2xl font-black text-white tracking-tighter flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Dato de muestra - pendiente integración real" />
+              $1,520,000
             </h3>
           </div>
         </div>
 
-        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-green-400 group hover:border-green-300 transition-all duration-500 flex justify-between items-center">
-          <div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Ingresos BI Semanal</p>
-            <h3 className="text-2xl font-black text-white tracking-tighter">$1,520,000</h3>
-          </div>
-          <DollarSign className="text-green-400 opacity-60 group-hover:opacity-100 transition-opacity" size={24} />
-        </div>
-
-        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-blue-400 group hover:border-blue-300 transition-all duration-500 flex justify-between items-center">
+        {/* Equipos Vendidos BI — hardcoded */}
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-blue-400 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
+          <Monitor size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Equipos Vendidos BI</p>
-            <h3 className="text-2xl font-black text-white tracking-tighter">14</h3>
+            <h3 className="text-2xl font-black text-white tracking-tighter flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Dato de muestra - pendiente integración real" />
+              14
+            </h3>
           </div>
-          <Smartphone className="text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" size={24} />
         </div>
 
       </div>
@@ -201,61 +243,90 @@ export default function Dashboard() {
 
         {/* ÚLTIMOS PEDIDOS */}
         <div className="glass-dark p-8 rounded-[3rem] border border-white/5">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xl font-black uppercase tracking-widest">Actividad Reciente</h3>
-            <Link to="/admin/pedidos" className="text-[10px] font-bold text-urban-blue hover:text-white transition-colors uppercase tracking-[0.3em]">Ver Todo ➔</Link>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-black uppercase tracking-widest border-l-2 border-blue-500 pl-4">Actividad Reciente</h3>
+            <Link to="/admin/pedidos" className="text-[10px] font-bold text-blue-400 hover:text-white transition-colors uppercase tracking-[0.3em]">Ver Todo ➔</Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] border-b border-white/5">
-                  <th className="pb-4 pl-4 text-urban-blue">ORDEN</th>
-                  <th className="pb-4">CLIENTE</th>
-                  <th className="pb-4 text-center">ESTADO</th>
-                  <th className="pb-4 text-right pr-4">TOTAL</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {estadisticas.recent_orders.map(order => (
-                  <tr key={order.id} className="group hover:bg-white/[0.02] transition-all">
-                    <td className="py-5 pl-4 font-black text-sm">#{order.order_number}</td>
-                    <td className="py-5 text-gray-400 text-xs font-bold">{order.customer?.name || 'Cliente'}</td>
-                    <td className="py-5 text-center">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${order.status === 'paid' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'}`}>
-                        {order.status_label}
-                      </span>
-                    </td>
-                    <td className="py-5 text-right pr-4 font-black">${order.total.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          {/* Column headers */}
+          <div className="grid grid-cols-4 gap-4 px-4 pb-3 border-b border-white/5">
+            {['ORDEN','CLIENTE','ESTADO','TOTAL'].map(h => (
+              <p key={h} className={`text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] ${h==='TOTAL' ? 'text-right' : ''}`}>{h}</p>
+            ))}
           </div>
+
+          {estadisticas.recent_orders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+              <BarChart2 size={36} className="opacity-30 mb-3" />
+              <p className="text-xs font-black uppercase tracking-widest">Sin datos suficientes aún</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {estadisticas.recent_orders.map(order => {
+                const statusMap = {
+                  paid:      'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+                  pending:   'bg-amber-500/15   text-amber-400   border-amber-500/25',
+                  shipped:   'bg-blue-500/15    text-blue-400    border-blue-500/25',
+                  delivered: 'bg-purple-500/15  text-purple-400  border-purple-500/25',
+                  cancelled: 'bg-red-500/15     text-red-400     border-red-500/25',
+                };
+                const badge = statusMap[order.status] || statusMap.pending;
+                return (
+                  <div key={order.id} className="grid grid-cols-4 gap-4 px-4 py-3 hover:bg-white/[0.03] rounded-xl transition-all items-center">
+                    <span className="font-mono text-xs text-gray-400">#{order.order_number}</span>
+                    <span className="text-sm font-black text-white truncate">{order.customer?.name || 'Cliente'}</span>
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border w-fit ${badge}`}>{order.status_label}</span>
+                    <span className="text-right font-black text-white">${Number(order.total).toLocaleString()}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* ALERTAS Y ACCESOS */}
         <div className="space-y-6">
           <div className="glass-dark p-8 rounded-[3rem] border border-white/5">
-            <h3 className="text-xl font-black uppercase tracking-widest mb-6">Bodega Táctica</h3>
+            <h3 className="text-xl font-black uppercase tracking-widest mb-6 border-l-2 border-blue-500 pl-4">Bodega Táctica</h3>
             <div className="space-y-4">
               {productosBajoStock.length === 0 && productosAgotados.length === 0 ? (
-                <div className="bg-green-500/10 border border-green-500/10 p-6 rounded-2xl text-center">
-                  <p className="text-green-500 font-black text-xs uppercase tracking-widest">Equipamiento al 100% ✅</p>
+                <div className="bg-emerald-500/10 border border-emerald-500/10 p-6 rounded-2xl text-center">
+                  <p className="text-emerald-400 font-black text-xs uppercase tracking-widest">Equipamiento al 100% ✅</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {productosAgotados.map(p => (
-                    <div key={p.id} className="flex justify-between items-center p-4 bg-red-500/10 border border-red-500/10 rounded-2xl">
-                      <span className="text-xs font-bold text-gray-200">{p.name}</span>
-                      <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Agotado</span>
-                    </div>
-                  ))}
-                  {productosBajoStock.map(p => (
-                    <div key={p.id} className="flex justify-between items-center p-4 bg-orange-500/10 border border-orange-500/10 rounded-2xl">
-                      <span className="text-xs font-bold text-gray-200">{p.name}</span>
-                      <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Quedan {p.stock}</span>
-                    </div>
-                  ))}
+                  {productosAgotados.map(p => {
+                    const pct = progressWidths[p.id] ?? 0;
+                    return (
+                      <div key={p.id} className="space-y-1.5">
+                        <div className="flex justify-between">
+                          <span className="text-xs font-bold text-gray-300 truncate max-w-[70%]">{p.name}</span>
+                          <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">AGOTADO</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                          <div className="h-full rounded-full bg-red-500 animate-pulse" style={{ width: '2%', transition: 'width 800ms cubic-bezier(0.22,1,0.36,1)' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {productosBajoStock.map(p => {
+                    const pct = progressWidths[p.id] ?? 0;
+                    const barColor = pct > 50 ? 'bg-emerald-500' : pct > 20 ? 'bg-amber-400' : 'bg-red-500 animate-pulse';
+                    return (
+                      <div key={p.id} className="space-y-1.5">
+                        <div className="flex justify-between">
+                          <span className="text-xs font-bold text-gray-300 truncate max-w-[70%]">{p.name}</span>
+                          <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Quedan {p.stock}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${barColor}`}
+                            style={{ width: `${pct}%`, transition: 'width 800ms cubic-bezier(0.22,1,0.36,1)' }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
