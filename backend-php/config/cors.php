@@ -17,22 +17,15 @@ return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    'allowed_methods' => ['*'],
 
-    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000')),
+    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173'), 'https://istore-chile.vercel.app'],
 
     'allowed_origins_patterns' => [
         '#^https://labstock-pro-.*\.vercel\.app$#',
     ],
 
-    'allowed_headers' => [
-        'Content-Type',
-        'X-Requested-With',
-        'Authorization',
-        'Accept',
-        'Origin',
-        'X-Session-Id',
-    ],
+    'allowed_headers' => ['*'],
 
     'exposed_headers' => ['Content-Disposition'],
 
