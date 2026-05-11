@@ -13,8 +13,10 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
 const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-if (!key) throw new Error("Missing VITE_STRIPE_PUBLISHABLE_KEY env variable");
-const stripePromise = loadStripe(key);
+if (!key) {
+  console.warn("⚠️ [iStore] Warning: VITE_STRIPE_PUBLISHABLE_KEY is not defined. Stripe checkout will be unavailable.");
+}
+const stripePromise = key ? loadStripe(key) : null;
 export default function Tienda() {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -133,16 +135,29 @@ export default function Tienda() {
               <p className="text-gray-400 text-sm">Completa tu orden con tecnología de encriptación Stripe.</p>
             </div>
 
-            <Elements stripe={stripePromise}>
-              <CheckoutForm
-                total={totalPrice}
-                cerrarModal={() => setMostrarCheckout(false)}
-                onSuccess={() => {
-                  refreshCart();
-                  setMostrarCheckout(false);
-                }}
-              />
-            </Elements>
+            {stripePromise ? (
+              <Elements stripe={stripePromise}>
+                <CheckoutForm
+                  total={totalPrice}
+                  cerrarModal={() => setMostrarCheckout(false)}
+                  onSuccess={() => {
+                    refreshCart();
+                    setMostrarCheckout(false);
+                  }}
+                />
+              </Elements>
+            ) : (
+              <div className="text-center p-6 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-200">
+                <p className="font-semibold mb-2 text-base">Pasarela Desactivada</p>
+                <p className="text-xs text-red-300 mb-6">La clave pública de Stripe (VITE_STRIPE_PUBLISHABLE_KEY) no está configurada en producción.</p>
+                <button
+                  onClick={() => setMostrarCheckout(false)}
+                  className="w-full py-3 px-6 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold transition-all text-sm"
+                >
+                  Volver a la Tienda
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
