@@ -36,5 +36,8 @@ php artisan storage:link --force 2>/dev/null || true
 echo "[iStore] Iniciando PHP-FPM..."
 php-fpm -D
 
+echo "[iStore] Probando configuración de Nginx..."
+nginx -t || echo "[iStore] ADVERTENCIA: Falló la validación de configuración de Nginx."
+
 echo "[iStore] Iniciando Nginx..."
 exec nginx -g 'daemon off;'
