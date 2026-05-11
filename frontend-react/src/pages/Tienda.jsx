@@ -12,7 +12,9 @@ import { useStaggerReveal } from '../hooks/useStaggerReveal';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+if (!key) throw new Error("Missing VITE_STRIPE_PUBLISHABLE_KEY env variable");
+const stripePromise = loadStripe(key);
 export default function Tienda() {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -364,7 +366,7 @@ export default function Tienda() {
                   const cs = cardStates[p.id] || null;
                   const agotado = p.stock === 0;
                   const fb = `https://placehold.co/600x600/000000/3b82f6?text=${encodeURIComponent((p.name || 'iStore').slice(0, 8))}`;
-                  const fallbackFinal = 'https://placehold.co/600x600/0a0a0a/3b82f6?text=iStore';
+                  const fallbackFinal = '/assets/placeholder-product.png';
                   return (
                     <div
                       key={p.id}

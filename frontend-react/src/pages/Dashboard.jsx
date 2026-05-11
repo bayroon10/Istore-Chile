@@ -170,8 +170,8 @@ export default function Dashboard() {
           TENDENCIA DE VENTAS (7D)
         </h3>
 
-        <div className="w-full h-80">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full min-h-[320px]">
+          <ResponsiveContainer width="99%" height={320}>
             <AreaChart data={estadisticas.chart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="neonGradient" x1="0" y1="0" x2="0" y2="1">
@@ -201,8 +201,8 @@ export default function Dashboard() {
             Curva de Ingresos (Últimos 7 días)
           </h3>
           
-          <div className="w-full h-72">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="w-full min-h-[288px]">
+            <ResponsiveContainer width="99%" height={288}>
               <LineChart data={salesTrend}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#222" />
                 <XAxis dataKey="dia" stroke="#444" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
@@ -223,8 +223,8 @@ export default function Dashboard() {
             Accesorios con Stock Crítico
           </h3>
           
-          <div className="w-full h-72">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="w-full min-h-[288px]">
+            <ResponsiveContainer width="99%" height={288}>
               <BarChart data={criticalStock} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#222" />
                 <XAxis type="number" stroke="#444" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />

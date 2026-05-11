@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -16,48 +17,57 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // 1. KPIs principales
-        $totalRevenue = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])
-            ->sum('total');
+        try {
+            // 1. KPIs principales
+            $totalRevenue = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])
+                ->sum('total');
 
-        $totalOrders = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])->count();
-        
-        $pendingOrders = Order::where('status', 'pending')->count();
+            $totalOrders = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])->count();
+            
+            $pendingOrders = Order::where('status', 'pending')->count();
 
-        $activeProducts = Product::where('is_active', true);
-        $lowStockCount = (clone $activeProducts)->where('stock', '<=', 5)->where('stock', '>', 0)->count();
-        $outOfStockCount = (clone $activeProducts)->where('stock', 0)->count();
+            $activeProducts = Product::where('is_active', true);
+            $lowStockCount = (clone $activeProducts)->where('stock', '<=', 5)->where('stock', '>', 0)->count();
+            $outOfStockCount = (clone $activeProducts)->where('stock', 0)->count();
 
-        // 2. Gráfico de ventas (últimos 7 días)
-        $sevenDaysAgo = now()->subDays(7)->startOfDay();
-        $chartData = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])
-            ->where('created_at', '>=', $sevenDaysAgo)
-            ->selectRaw('DATE(created_at) as date, SUM(total) as total_sales')
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->map(fn($item) => [
-                'fecha' => $item->date,
-                'total_ventas' => (float) $item->total_sales
+            // 2. Gráfico de ventas (últimos 7 días)
+            $sevenDaysAgo = now()->subDays(7)->startOfDay();
+            $chartData = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])
+                ->where('created_at', '>=', $sevenDaysAgo)
+                ->selectRaw('CAST(created_at AS DATE) as date, SUM(total) as total_sales')
+                ->groupBy(DB::raw('CAST(created_at AS DATE)'))
+                ->orderBy('date', 'asc')
+                ->get()
+                ->map(fn($item) => [
+                    'fecha' => $item->date,
+                    'total_ventas' => (float) $item->total_sales
+                ]);
+
+            // 3. Órdenes recientes (las últimas 5)
+            $recentOrders = Order::with(['user', 'items'])
+                ->latest()
+                ->take(5)
+                ->get();
+
+            return response()->json([
+                'kpis' => [
+                    'total_revenue' => (float) $totalRevenue,
+                    'total_orders'  => $totalOrders,
+                    'pending_orders' => $pendingOrders,
+                    'low_stock_alerts' => $lowStockCount + $outOfStockCount,
+                    'out_of_stock' => $outOfStockCount,
+                ],
+                'chart' => $chartData,
+                'recent_orders' => OrderResource::collection($recentOrders),
             ]);
-
-        // 3. Órdenes recientes (las últimas 5)
-        $recentOrders = Order::with(['user', 'items'])
-            ->latest()
-            ->take(5)
-            ->get();
-
-        return response()->json([
-            'kpis' => [
-                'total_revenue' => (float) $totalRevenue,
-                'total_orders'  => $totalOrders,
-                'pending_orders' => $pendingOrders,
-                'low_stock_alerts' => $lowStockCount + $outOfStockCount,
-                'out_of_stock' => $outOfStockCount,
-            ],
-            'chart' => $chartData,
-            'recent_orders' => OrderResource::collection($recentOrders),
-        ]);
+        } catch (\Exception $e) {
+            Log::error("[/api/estadisticas] Error: " . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor al procesar estadísticas.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -65,43 +75,52 @@ class DashboardController extends Controller
      */
     public function warehouseStats()
     {
-        $products = Product::all();
-        
-        $totalInventoryValue = $products->sum(function ($product) {
-            return $product->price * $product->stock;
-        });
-
-        $totalStockUnits = $products->sum('stock');
-        $activeProductsCount = $products->where('is_active', true)->count();
-        
-        $lowStockCount = $products->where('is_active', true)->where('stock', '<=', 5)->where('stock', '>', 0)->count();
-        $outOfStockCount = $products->where('is_active', true)->where('stock', 0)->count();
-
-        // Productos con mayor valor inmovilizado en stock
-        $topValuableProducts = Product::where('stock', '>', 0)
-            ->orderByRaw('(price * stock) DESC')
-            ->take(5)
-            ->get(['id', 'name', 'stock', 'price'])
-            ->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'stock' => $product->stock,
-                    'price' => (float) $product->price,
-                    'total_value' => (float) ($product->price * $product->stock)
-                ];
+        try {
+            $products = Product::all();
+            
+            $totalInventoryValue = $products->sum(function ($product) {
+                return $product->price * $product->stock;
             });
 
-        return response()->json([
-            'inventory_value' => (float) $totalInventoryValue,
-            'total_stock_units' => $totalStockUnits,
-            'active_products' => $activeProductsCount,
-            'alerts' => [
-                'low_stock' => $lowStockCount,
-                'out_of_stock' => $outOfStockCount,
-            ],
-            'top_valuable_products' => $topValuableProducts,
-        ]);
+            $totalStockUnits = $products->sum('stock');
+            $activeProductsCount = $products->where('is_active', true)->count();
+            
+            $lowStockCount = $products->where('is_active', true)->where('stock', '<=', 5)->where('stock', '>', 0)->count();
+            $outOfStockCount = $products->where('is_active', true)->where('stock', 0)->count();
+
+            // Productos con mayor valor inmovilizado en stock
+            $topValuableProducts = Product::where('stock', '>', 0)
+                ->orderByRaw('(price * stock) DESC')
+                ->take(5)
+                ->get(['id', 'name', 'stock', 'price'])
+                ->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'stock' => $product->stock,
+                        'price' => (float) $product->price,
+                        'total_value' => (float) ($product->price * $product->stock)
+                    ];
+                });
+
+            return response()->json([
+                'inventory_value' => (float) $totalInventoryValue,
+                'total_stock_units' => $totalStockUnits,
+                'active_products' => $activeProductsCount,
+                'alerts' => [
+                    'low_stock' => $lowStockCount,
+                    'out_of_stock' => $outOfStockCount,
+                ],
+                'top_valuable_products' => $topValuableProducts,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("[/api/admin/stats/warehouse] Error: " . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor al procesar estadísticas de almacén.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -109,45 +128,54 @@ class DashboardController extends Controller
      */
     public function salesTrend()
     {
-        $sevenDaysAgo = now()->subDays(6)->startOfDay(); // últimos 7 días incluyendo hoy
-        
-        // Inicializar los últimos 7 días con ingresos en 0
-        $days = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i);
-            $englishDay = $date->format('l');
-            $dayNames = [
-                'Monday'    => 'Lun',
-                'Tuesday'   => 'Mar',
-                'Wednesday' => 'Mie',
-                'Thursday'  => 'Jue',
-                'Friday'    => 'Vie',
-                'Saturday'  => 'Sab',
-                'Sunday'    => 'Dom'
-            ];
-            $spanishDay = $dayNames[$englishDay] ?? $englishDay;
+        try {
+            $sevenDaysAgo = now()->subDays(6)->startOfDay(); // últimos 7 días incluyendo hoy
             
-            $days[$date->format('Y-m-d')] = [
-                'dia' => $spanishDay,
-                'fecha' => $date->format('d/m'),
-                'ingresos' => 0
-            ];
-        }
-
-        // Obtener ventas reales agrupadas por día
-        $sales = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing', 'processing_payment'])
-            ->where('created_at', '>=', $sevenDaysAgo)
-            ->selectRaw('DATE(created_at) as date, SUM(total) as total_sales')
-            ->groupBy('date')
-            ->get();
-
-        foreach ($sales as $sale) {
-            if (isset($days[$sale->date])) {
-                $days[$sale->date]['ingresos'] = (float) $sale->total_sales;
+            // Inicializar los últimos 7 días con ingresos en 0
+            $days = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $englishDay = $date->format('l');
+                $dayNames = [
+                    'Monday'    => 'Lun',
+                    'Tuesday'   => 'Mar',
+                    'Wednesday' => 'Mie',
+                    'Thursday'  => 'Jue',
+                    'Friday'    => 'Vie',
+                    'Saturday'  => 'Sab',
+                    'Sunday'    => 'Dom'
+                ];
+                $spanishDay = $dayNames[$englishDay] ?? $englishDay;
+                
+                $days[$date->format('Y-m-d')] = [
+                    'dia' => $spanishDay,
+                    'fecha' => $date->format('d/m'),
+                    'ingresos' => 0
+                ];
             }
-        }
 
-        return response()->json(array_values($days));
+            // Obtener ventas reales agrupadas por día (usando CAST para PostgreSQL)
+            $sales = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing', 'processing_payment'])
+                ->where('created_at', '>=', $sevenDaysAgo)
+                ->selectRaw('CAST(created_at AS DATE) as date, SUM(total) as total_sales')
+                ->groupBy(DB::raw('CAST(created_at AS DATE)'))
+                ->get();
+
+            foreach ($sales as $sale) {
+                if (isset($days[$sale->date])) {
+                    $days[$sale->date]['ingresos'] = (float) $sale->total_sales;
+                }
+            }
+
+            return response()->json(array_values($days));
+        } catch (\Exception $e) {
+            Log::error("[/api/admin/stats/sales-trend] Error: " . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor al procesar tendencia de ventas.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -155,20 +183,28 @@ class DashboardController extends Controller
      */
     public function criticalStock()
     {
-        $products = Product::where('is_active', true)
-            ->where('stock', '<=', 15)
-            ->orderBy('stock', 'asc')
-            ->take(10) // Limitado a los 10 más críticos para evitar sobrecargar el gráfico
-            ->get(['name', 'stock']);
+        try {
+            $products = Product::where('is_active', true)
+                ->where('stock', '<=', 15)
+                ->orderBy('stock', 'asc')
+                ->take(10) // Limitado a los 10 más críticos para evitar sobrecargar el gráfico
+                ->get(['name', 'stock']);
 
-        $chartData = $products->map(function ($product) {
-            return [
-                'producto' => strlen($product->name) > 15 ? substr($product->name, 0, 12) . '...' : $product->name,
-                'stock' => (int) $product->stock
-            ];
-        });
+            $chartData = $products->map(function ($product) {
+                return [
+                    'producto' => strlen($product->name) > 15 ? substr($product->name, 0, 12) . '...' : $product->name,
+                    'stock' => (int) $product->stock
+                ];
+            });
 
-        return response()->json($chartData);
+            return response()->json($chartData);
+        } catch (\Exception $e) {
+            Log::error("[/api/admin/stats/critical-stock] Error: " . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor al procesar stock crítico.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
-
