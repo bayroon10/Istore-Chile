@@ -179,7 +179,13 @@ export default function Tienda() {
             items.map((item) => (
               <div key={item.id} className="flex items-center gap-4 group">
                 <div className="w-20 h-20 bg-space-grey rounded-2xl flex items-center justify-center border border-white/5 group-hover:border-urban-blue/30 transition-all">
-                  <img src={item.product_image && !item.product_image.includes('via.placeholder.com') ? item.product_image : "https://images.unsplash.com/photo-1606841837044-8848419615a1?q=80&w=200"} alt="" className="w-16 h-16 object-contain" />
+                  <img
+                    src={item.product_image && !item.product_image.includes('via.placeholder.com') ? item.product_image : `https://placehold.co/80x80/0a0a0a/3b82f6?text=${encodeURIComponent((item.product_name || 'i').slice(0, 2))}`}
+                    alt={item.product_name || 'Producto'}
+                    loading="lazy"
+                    onError={(e) => { e.target.src = 'https://placehold.co/80x80/000/3b82f6?text=i'; }}
+                    className="w-16 h-16 object-contain"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm truncate">{item.product_name}</p>

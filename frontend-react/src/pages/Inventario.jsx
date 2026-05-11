@@ -371,6 +371,7 @@ export default function Inventario() {
                       }
                     }}
                     className="max-h-full max-w-full object-contain"
+                    loading="lazy"
                   />
                 </div>
 

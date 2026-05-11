@@ -29,7 +29,7 @@ Route::post('/webhooks/stripe', [WebhookController::class, 'handle']);
 // Rate limiting: 30 mensajes/minuto por IP — protege costos de Gemini API
 Route::post('/chatbot', [ChatbotController::class, 'chat'])->middleware('throttle:30,1');
 
-Route::post('/cliente/registro', [ClienteAuthController::class, 'registro']);
+Route::post('/cliente/registro', [ClienteAuthController::class, 'registro'])->middleware('throttle:5,1');
 Route::post('/cliente/login', [ClienteAuthController::class, 'login'])->middleware('throttle:5,1');
 
 // =============================================
