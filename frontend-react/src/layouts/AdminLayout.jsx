@@ -13,7 +13,6 @@ export default function AdminLayout() {
         <Link to="/admin" style={{ color: '#f5f5f7', textDecoration: 'none', fontWeight: 'bold' }}>Panel</Link>
         <Link to="/admin/inventario" style={{ color: '#f5f5f7', textDecoration: 'none', fontWeight: 'bold' }}>Inventario</Link>
         <Link to="/admin/pedidos" style={{ color: '#f5f5f7', textDecoration: 'none', fontWeight: 'bold' }}>Órdenes y Envíos</Link>
-        <Link to="/admin/bi" style={{ color: '#f5f5f7', textDecoration: 'none', fontWeight: 'bold' }}>Dashboard BI</Link>
         
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '20px', alignItems: 'center' }}>
           <Link to="/" style={{ color: '#ff9500', textDecoration: 'none', fontWeight: 'bold' }}>Ir a la Tienda ➔</Link>

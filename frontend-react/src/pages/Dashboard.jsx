@@ -1,7 +1,26 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AlertTriangle, Smartphone, DollarSign } from 'lucide-react';
 import api from '../lib/api';
+
+const dataVentasMock = [
+  { dia: 'Lun', ingresos: 120000 },
+  { dia: 'Mar', ingresos: 85000 },
+  { dia: 'Mie', ingresos: 210000 },
+  { dia: 'Jue', ingresos: 45000 },
+  { dia: 'Vie', ingresos: 320000 },
+  { dia: 'Sab', ingresos: 450000 },
+  { dia: 'Dom', ingresos: 290000 },
+];
+
+const dataStockMock = [
+  { nombre: 'Cargador 20W (Alt)', stock: 8, nivel: 'Crítico' },
+  { nombre: 'Audífonos i12 (Alt)', stock: 5, nivel: 'Crítico' },
+  { nombre: 'iPhone 11 64GB', stock: 3, nivel: 'Crítico' },
+  { nombre: 'Cable Lightning', stock: 45, nivel: 'Óptimo' },
+  { nombre: 'Funda Silicona', stock: 12, nivel: 'Atención' },
+];
 
 export default function Dashboard() {
   const [productos, setProductos] = useState([]);
@@ -56,34 +75,58 @@ export default function Dashboard() {
       </header>
 
       {/* 🌟 KPI CARDS (TECH-WEAR STYLE) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
 
-        <div className="glass-dark p-8 rounded-[2.5rem] border-l-4 border-l-green-500 group hover:border-urban-blue transition-all duration-500">
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Ingresos Totales</p>
-          <h3 className="text-4xl font-black text-white tracking-tighter group-hover:scale-105 transition-transform origin-left">
-            ${(estadisticas.kpis.total_revenue || 0).toLocaleString()}
-          </h3>
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-green-500 group hover:border-urban-blue transition-all duration-500 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Ingresos Totales</p>
+            <h3 className="text-2xl font-black text-white tracking-tighter group-hover:scale-105 transition-transform origin-left">
+              ${(estadisticas.kpis.total_revenue || 0).toLocaleString()}
+            </h3>
+          </div>
         </div>
 
-        <div className="glass-dark p-8 rounded-[2.5rem] border-l-4 border-l-urban-blue transition-all duration-500">
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Volumen Histórico</p>
-          <h3 className="text-4xl font-black text-white tracking-tighter">
-            {estadisticas.kpis.total_orders || 0}
-          </h3>
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-urban-blue transition-all duration-500 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Volumen Histórico</p>
+            <h3 className="text-2xl font-black text-white tracking-tighter">
+              {estadisticas.kpis.total_orders || 0}
+            </h3>
+          </div>
         </div>
 
-        <div className="glass-dark p-8 rounded-[2.5rem] border-l-4 border-l-orange-500 transition-all duration-500">
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Órdenes Pendientes</p>
-          <h3 className="text-4xl font-black text-white tracking-tighter">
-            {estadisticas.kpis.pending_orders || 0}
-          </h3>
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-orange-500 transition-all duration-500 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Órdenes Pendientes</p>
+            <h3 className="text-2xl font-black text-white tracking-tighter">
+              {estadisticas.kpis.pending_orders || 0}
+            </h3>
+          </div>
         </div>
 
-        <div className="glass-dark p-8 rounded-[2.5rem] border-l-4 border-l-red-500 transition-all duration-500">
-          <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Stock Crítico</p>
-          <h3 className="text-4xl font-black text-white tracking-tighter">
-            {estadisticas.kpis.low_stock_alerts || 0}
-          </h3>
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-red-500 transition-all duration-500 flex flex-col justify-between">
+          <div>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Stock Crítico</p>
+            <h3 className="text-2xl font-black text-white tracking-tighter">
+              {estadisticas.kpis.low_stock_alerts || 0}
+            </h3>
+          </div>
+        </div>
+
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-green-400 group hover:border-green-300 transition-all duration-500 flex justify-between items-center">
+          <div>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Ingresos BI Semanal</p>
+            <h3 className="text-2xl font-black text-white tracking-tighter">$1,520,000</h3>
+          </div>
+          <DollarSign className="text-green-400 opacity-60 group-hover:opacity-100 transition-opacity" size={24} />
+        </div>
+
+        <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-blue-400 group hover:border-blue-300 transition-all duration-500 flex justify-between items-center">
+          <div>
+            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Equipos Vendidos BI</p>
+            <h3 className="text-2xl font-black text-white tracking-tighter">14</h3>
+          </div>
+          <Smartphone className="text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" size={24} />
         </div>
 
       </div>
@@ -114,6 +157,55 @@ export default function Dashboard() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* 📊 SECCIÓN DE GRÁFICOS DE BI (ESTILO NEÓN OSCURO COHERENTE) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        
+        {/* CURVA DE INGRESOS */}
+        <div className="glass-dark p-8 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-[80px] -mr-24 -mt-24"></div>
+          
+          <h3 className="text-lg font-black mb-8 flex items-center gap-3 uppercase tracking-wider">
+            <span className="w-6 h-1 bg-blue-500 rounded-full shadow-neon-blue"></span>
+            Curva de Ingresos (Últimos 7 días)
+          </h3>
+          
+          <div className="w-full h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={dataVentasMock}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#222" />
+                <XAxis dataKey="dia" stroke="#444" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
+                <YAxis stroke="#444" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
+                <Tooltip contentStyle={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', background: '#1d1d1f', color: 'white', fontSize: '12px', fontWeight: 'bold' }} formatter={(value) => `$${value.toLocaleString()}`} />
+                <Line type="monotone" dataKey="ingresos" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, stroke: '#3b82f6', strokeWidth: 2, fill: '#121212' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* STOCK CRÍTICO */}
+        <div className="glass-dark p-8 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/10 rounded-full blur-[80px] -mr-24 -mt-24"></div>
+          
+          <h3 className="text-lg font-black mb-8 flex items-center gap-3 uppercase tracking-wider">
+            <span className="w-6 h-1 bg-red-500 rounded-full shadow-neon-red"></span>
+            Accesorios con Stock Crítico
+          </h3>
+          
+          <div className="w-full h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dataStockMock.filter(d => d.stock <= 15)} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#222" />
+                <XAxis type="number" stroke="#444" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
+                <YAxis dataKey="nombre" type="category" width={120} stroke="#888" tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} />
+                <Tooltip contentStyle={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', background: '#1d1d1f', color: 'white', fontSize: '12px', fontWeight: 'bold' }} />
+                <Bar dataKey="stock" fill="#ef4444" radius={[0, 10, 10, 0]} barSize={16} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
       </div>
 
       {/* 🧾 RECENT ORDERS & STOCK ALERTS */}
