@@ -37,9 +37,9 @@ echo "[iStore] Iniciando PHP-FPM..."
 php-fpm -D
 
 # Dynamic PORT binding for Railway compatibility
-PORT_TO_LISTEN=${PORT:-80}
+PORT_TO_LISTEN=${PORT:-8080}
 echo "[iStore] Configurando Nginx para escuchar en el puerto ${PORT_TO_LISTEN}..."
-sed -i "s/listen 80;/listen ${PORT_TO_LISTEN};/g" /etc/nginx/sites-available/default
+sed -i -E "s/listen\s+[0-9]+;/listen ${PORT_TO_LISTEN};/g" /etc/nginx/sites-available/default
 cp /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 echo "[iStore] Probando configuración de Nginx..."
