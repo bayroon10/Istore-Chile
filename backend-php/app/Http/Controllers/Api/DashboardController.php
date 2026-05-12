@@ -36,7 +36,7 @@ class DashboardController extends Controller
                 ->where('created_at', '>=', $sevenDaysAgo)
                 ->selectRaw('CAST(created_at AS DATE) as date, SUM(total) as total_sales')
                 ->groupBy(DB::raw('CAST(created_at AS DATE)'))
-                ->orderBy('date', 'asc')
+                ->orderBy(DB::raw('CAST(created_at AS DATE)'), 'asc')
                 ->get()
                 ->map(fn($item) => [
                     'fecha' => $item->date,
@@ -65,7 +65,7 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor al procesar estadísticas.',
-                'error' => $e->getMessage()
+                'error' => config('app.debug') ? $e->getMessage() : 'Ocurrió un error inesperado al procesar los datos.'
             ], 500);
         }
     }
@@ -118,7 +118,7 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor al procesar estadísticas de almacén.',
-                'error' => $e->getMessage()
+                'error' => config('app.debug') ? $e->getMessage() : 'Ocurrió un error inesperado al procesar los datos.'
             ], 500);
         }
     }
@@ -173,7 +173,7 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor al procesar tendencia de ventas.',
-                'error' => $e->getMessage()
+                'error' => config('app.debug') ? $e->getMessage() : 'Ocurrió un error inesperado al procesar los datos.'
             ], 500);
         }
     }
@@ -188,7 +188,7 @@ class DashboardController extends Controller
                 ->where('stock', '<=', 15)
                 ->orderBy('stock', 'asc')
                 ->take(10) // Limitado a los 10 más críticos para evitar sobrecargar el gráfico
-                ->get(['name', 'stock']);
+                ->get(['id', 'name', 'stock']);
 
             $chartData = $products->map(function ($product) {
                 return [
@@ -203,7 +203,7 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor al procesar stock crítico.',
-                'error' => $e->getMessage()
+                'error' => config('app.debug') ? $e->getMessage() : 'Ocurrió un error inesperado al procesar los datos.'
             ], 500);
         }
     }
