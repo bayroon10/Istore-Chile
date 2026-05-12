@@ -36,8 +36,15 @@ php artisan storage:link --force 2>/dev/null || true
 echo "[iStore] Iniciando PHP-FPM..."
 php-fpm -D
 
+# Dynamic PORT binding for Railway compatibility
+PORT_TO_LISTEN=${PORT:-80}
+echo "[iStore] Configurando Nginx para escuchar en el puerto ${PORT_TO_LISTEN}..."
+sed -i "s/listen 80;/listen ${PORT_TO_LISTEN};/g" /etc/nginx/sites-available/default
+cp /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
 echo "[iStore] Probando configuración de Nginx..."
 nginx -t || echo "[iStore] ADVERTENCIA: Falló la validación de configuración de Nginx."
 
 echo "[iStore] Iniciando Nginx..."
 exec nginx -g 'daemon off;'
+
