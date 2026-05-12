@@ -40,7 +40,9 @@ php-fpm -D
 PORT_TO_LISTEN=${PORT:-8080}
 echo "[iStore] Configurando Nginx para escuchar en el puerto ${PORT_TO_LISTEN}..."
 sed -i -E "s/listen\s+[0-9]+;/listen ${PORT_TO_LISTEN};/g" /etc/nginx/sites-available/default
-cp /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+if [ ! -L /etc/nginx/sites-enabled/default ]; then
+    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+fi
 
 echo "[iStore] Probando configuración de Nginx..."
 nginx -t || echo "[iStore] ADVERTENCIA: Falló la validación de configuración de Nginx."
