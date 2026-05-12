@@ -46,7 +46,7 @@ RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
     && chmod -R 775 /app/storage /app/bootstrap/cache
 
 # 9. Configuración Nginx
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/sites-available/default
 
 # 10. Entrypoint de producción
 COPY entrypoint.sh /entrypoint.sh
