@@ -18,17 +18,17 @@ php artisan migrate --force || echo "[iStore] ADVERTENCIA: No se pudieron ejecut
 
 # 3. Limpiar caches antiguos antes de optimizar
 echo "[iStore] Limpiando caches antiguos..."
-php artisan config:clear
-php artisan cache:clear
-php artisan route:clear
-php artisan view:clear
-php artisan optimize:clear
+php artisan config:clear || true
+php artisan cache:clear || true
+php artisan route:clear || true
+php artisan view:clear || true
+php artisan optimize:clear || true
 
 # 4. Optimizar la aplicación para producción
 echo "[iStore] Optimizando cache de configuración y rutas..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan config:cache || true
+php artisan route:cache || true
+php artisan view:cache || true
 
 # 4. Limpiar cache de optimización si es necesario
 php artisan storage:link --force 2>/dev/null || true
