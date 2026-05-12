@@ -39,7 +39,7 @@ php-fpm -D
 # Dynamic PORT binding for Railway compatibility
 PORT_TO_LISTEN=${PORT:-8080}
 echo "[iStore] Configurando Nginx para escuchar en el puerto ${PORT_TO_LISTEN}..."
-sed -i -E "s/listen\s+[0-9]+;/listen ${PORT_TO_LISTEN};/g" /etc/nginx/sites-available/default
+sed -i "s/PORT_PLACEHOLDER/$PORT/g" /etc/nginx/sites-available/default
 if [ ! -L /etc/nginx/sites-enabled/default ]; then
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 fi
