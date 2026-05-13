@@ -31,6 +31,7 @@ class ChatbotController extends Controller
             $products = Product::where('is_active', true)
                 ->where('stock', '>', 0)
                 ->with('category')
+                ->limit(20)
                 ->get(['id', 'name', 'price', 'stock', 'category_id']);
 
             $inventoryContext = $products->map(function ($p) {

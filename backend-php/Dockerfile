@@ -21,11 +21,6 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Instalar Node.js 20 (para Vite build)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean
-
 # 4. Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -35,11 +30,6 @@ COPY . .
 
 # 6. Dependencias PHP (sin dev)
 RUN composer install --optimize-autoloader --no-dev --no-interaction
-
-# 7. Build del frontend React (Vite)
-#    Nota: si el frontend está en un repo separado o se despliega en Vercel,
-#    este paso puede omitirse. Se mantiene por compatibilidad.
-RUN if [ -f "package.json" ]; then (npm ci || npm install) && npm run build; fi
 
 # 8. Permisos para Laravel
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \

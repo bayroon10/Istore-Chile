@@ -1,4 +1,4 @@
-# 🛡️ LabStock Pro
+# 🍎 iStore Chile
 
 [![Laravel 12](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
 [![React 19](https://img.shields.io/badge/React-19.x-61DAFB?style=for-the-badge&logo=react)](https://react.dev)
@@ -6,55 +6,52 @@
 [![Tailwind v4](https://img.shields.io/badge/Tailwind_v4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
 [![PHP 8.3](https://img.shields.io/badge/PHP-8.3-777BB4?style=for-the-badge&logo=php)](https://www.php.net)
 
-**LabStock Pro** es un ecosistema e-commerce de grado industrial diseñado para el suministro táctico y tecnológico. Este proyecto demuestra una arquitectura Full Stack robusta, optimizada para el rendimiento, la escalabilidad y la mantenibilidad, siguiendo los estándares más exigentes de la ingeniería de software actual.
+**iStore Chile** es un ecosistema e-commerce premium diseñado para la venta de productos tecnológicos Apple. Este proyecto demuestra una arquitectura Full Stack robusta, optimizada para el rendimiento y la escalabilidad, integrando IA y servicios de pago modernos.
 
 ---
 
 ## ⚡ Key Features (Technical Flex)
 
-Este proyecto no es solo un e-commerce; es una vitrina de prácticas avanzadas de desarrollo:
-
-*   **📈 Paginación Dinámica Server-Side:** Implementación de un catálogo impulsado 100% por el backend. Evita la sobrecarga de memoria en el cliente al procesar miles de registros, gestionando filtros y búsqueda directamente en la capa de persistencia.
-*   **⏱️ Frontend Optimization (Debounced Search):** Uso de un custom hook `useDebounce` propietario. Esta técnica previene la saturación de la API (API flooding) al retrasar las peticiones de búsqueda hasta que el usuario deja de escribir, mejorando drásticamente la UX y reduciendo costos de infraestructura.
-*   **🧪 Automated Resilient Testing:** Suite de pruebas automatizadas con **PHPUnit**. Los tests de integración (Feature Tests) se ejecutan en un entorno aislado con **SQLite (In-Memory)**, garantizando que la lógica de negocio, autenticación y transacciones sean resilientes ante cualquier cambio sin depender de una base de datos externa.
-*   **💎 Gilded Heirloom Design System:** Sistema de diseño personalizado construido sobre **Tailwind CSS v4**. Utiliza tokens semánticos, utilidades de glassmorphism y una estética "Tech-Wear" premium que prioriza la legibilidad y la interacción fluida.
+*   **📈 Paginación Dinámica Server-Side:** Catálogo impulsado 100% por el backend con filtros avanzados y búsqueda optimizada en PostgreSQL.
+*   **🤖 Asistente IA (Santi):** Integración con **Google Gemini API** para consultas de stock y asesoría técnica personalizada.
+*   **💳 Checkout Seguro:** Flujo de pago completo con **Stripe** (modo test), incluyendo manejo de webhooks.
+*   **📸 Gestión Cloud:** Almacenamiento y optimización de imágenes mediante **Cloudinary**.
+*   **⏱️ Frontend Optimization:** Uso de custom hooks como `useDebounce` para prevenir API flooding y mejorar la UX.
 
 ---
 
 ## 🏗️ Arquitectura
 
-El proyecto está desacoplado siguiendo el patrón de **Single Page Application (SPA)** con una comunicación estricta vía **RESTful API**:
-
-*   **Backend:** Laravel 12 actuando como una API Stateless. Gestiona la lógica de negocio, seguridad (Sanctum/Spatie), integración con Stripe y almacenamiento en la nube.
-*   **Frontend:** React 19 (Vite) enfocado en una interfaz de usuario reactiva, gestión de estado eficiente y consumo de API optimizado.
+*   **Backend:** Laravel 12 (API Stateless) + PostgreSQL (Neon.tech). Gestión de inventario, órdenes y seguridad con Sanctum.
+*   **Frontend:** React 19 + Vite 7 + Tailwind CSS v4. SPA reactiva desplegada en Vercel.
+*   **Infraestructura:** Docker (Backend) desplegado en Koyeb/Railway.
 
 ---
 
-## ⚙️ Instalación Local (Laragon)
-
-Sigue estos pasos para desplegar el entorno de desarrollo en tu máquina local:
+## ⚙️ Instalación Local
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/bayroon10/Istore-Chile.git labstock-pro
-cd labstock-pro
+git clone https://github.com/bayroon10/Istore-Chile.git istore-chile
+cd istore-chile
 ```
 
 ### 2. Configuración del Backend (Laravel)
 ```bash
 cd backend-php
 composer install
-cp .env.example .env
-# Configura tus credenciales de DB en el .env
+# Copia el .env y configura tus credenciales (DB, Stripe, Gemini, Cloudinary)
 php artisan key:generate
 php artisan migrate --seed
+php artisan serve
 ```
 
 ### 3. Configuración del Frontend (React)
 ```bash
 cd ../frontend-react
 npm install
-cp .env.example .env
+# Configura el VITE_API_URL en tu .env
+npm run dev
 ```
 
 ---
@@ -63,12 +60,11 @@ cp .env.example .env
 
 | Acción | Comando |
 | :--- | :--- |
-| **Levantar Entorno Dev** | `npm run dev` (En ambas carpetas) |
-| **Ejecutar Suite de Tests** | `php artisan test` |
-| **Optimizar Backend** | `php artisan optimize` |
-| **Build de Producción** | `npm run build` |
+| **Levantar Entorno Dev** | `php artisan serve` / `npm run dev` |
+| **Ejecutar Tests** | `php artisan test` |
+| **Optimizar Producción** | `php artisan optimize` |
 
 ---
 
 > [!TIP]
-> **LabStock Pro** utiliza **Stripe** en modo de prueba para todas las transacciones financieras, garantizando un flujo de pago seguro y verificado.
+> **iStore Chile** utiliza **Stripe** en modo de prueba para todas las transacciones financieras.
