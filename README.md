@@ -24,7 +24,7 @@
 
 *   **Backend:** Laravel 12 (API Stateless) + PostgreSQL (Neon.tech). Gestión de inventario, órdenes y seguridad con Sanctum.
 *   **Frontend:** React 19 + Vite 7 + Tailwind CSS v4. SPA reactiva desplegada en Vercel.
-*   **Infraestructura:** Docker (Backend) desplegado en Koyeb/Railway.
+*   **Infraestructura:** Docker (Backend) desplegado en Render.
 
 ---
 

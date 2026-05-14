@@ -42,7 +42,7 @@ COPY nginx.conf /etc/nginx/sites-available/default
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# 11. Exponer puerto (Railway lo manejará dinámicamente)
+# 11. Exponer puerto (Render lo manejará dinámicamente)
 # EXPOSE 80 removido para no forzar el ruteo a 80
 
 # 12. Arranque: migra + optimiza + FPM + Nginx

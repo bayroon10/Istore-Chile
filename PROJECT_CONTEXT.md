@@ -42,7 +42,7 @@
 - `APP_ENV=production`: Entorno (production/local).
 - `APP_KEY`: Clave de cifrado de Laravel.
 - `APP_DEBUG=false`: Modo debug apagado en producción.
-- `APP_URL`: URL del backend (ej. Koyeb).
+- `APP_URL`: URL del backend (ej. Render).
 - `FRONTEND_URL`: URL del frontend en Vercel.
 - `ALLOWED_ORIGINS`: Lista separada por comas (ej. `https://istore-chile.vercel.app`).
 - `DB_CONNECTION=pgsql`: Motor de base de datos.
@@ -98,23 +98,23 @@
 - **Backend:** Intentado en Railway, pero probablemente caído o con errores de despliegue por fallos de CORS, base de datos no persistente o falta de créditos.
 - **Frontend:** Desplegado exitosamente en Vercel, pero no se puede comunicar con el backend por el problema de CORS.
 
-### Migración recomendada (Railway → Koyeb / Render)
+### Infraestructura Final (Render)
 Para estabilizar el backend de manera gratuita y eficiente:
 1. **Actualizar `nginx.conf`**: Quitar todo rastro de CORS para que Laravel haga el trabajo.
 2. **Actualizar `Dockerfile`**: Limpiar Node.js y pasos de Vite.
-3. **Desplegar en Koyeb**:
+3. **Desplegar en Render**:
    - Crear un Web Service usando GitHub.
-   - Override command no es necesario (el `entrypoint.sh` arranca FPM y Nginx).
-   - Koyeb inyectará dinámicamente el `$PORT` en `entrypoint.sh`.
-4. **Variables a configurar en el Dashboard de Koyeb**:
-   - `APP_KEY`, `APP_ENV=production`, `APP_URL=<koyeb-url>`
+   - Seleccionar Runtime: Docker.
+   - Render inyectará dinámicamente el `$PORT` en `entrypoint.sh`.
+4. **Variables a configurar en el Dashboard de Render**:
+   - `APP_KEY`, `APP_ENV=production`, `APP_URL=<render-url>`
    - `DB_*` (Conectar a Neon.tech via Postgres).
    - `ALLOWED_ORIGINS=https://istore-chile.vercel.app`
    - Claves de Cloudinary, Gemini y Stripe.
 5. **Frontend (Vercel)**:
-   - Cambiar `VITE_API_URL` por la nueva URL de Koyeb.
+   - Cambiar `VITE_API_URL` por la nueva URL de Render.
 6. **Stripe**:
-   - Actualizar el endpoint del Webhook en el Dashboard de Stripe apuntando a `<koyeb-url>/api/webhooks/stripe`.
+   - Actualizar el endpoint del Webhook en el Dashboard de Stripe apuntando a `<render-url>/api/webhooks/stripe`.
 
 ## 📋 Features Implementadas
 - ✅ **Catálogo dinámico**: Productos paginados desde el backend.

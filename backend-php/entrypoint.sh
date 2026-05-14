@@ -36,7 +36,7 @@ php artisan storage:link --force 2>/dev/null || true
 echo "[iStore] Iniciando PHP-FPM..."
 php-fpm -D
 
-# Dynamic PORT binding for Railway compatibility
+# Dynamic PORT binding for Render compatibility
 PORT_TO_LISTEN=${PORT:-8080}
 echo "[iStore] Configurando Nginx para escuchar en el puerto ${PORT_TO_LISTEN}..."
 sed -i "s/PORT_PLACEHOLDER/$PORT/g" /etc/nginx/sites-available/default
