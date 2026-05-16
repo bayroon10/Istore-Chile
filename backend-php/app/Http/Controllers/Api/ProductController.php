@@ -27,7 +27,7 @@ class ProductController extends Controller
     {
         $query = Product::query()
             ->with(['category', 'images', 'primaryImage'])
-            ->whereRaw('is_active = true');
+            ->where('is_active', true);
 
         // Búsqueda por nombre (Database Agnostic: Case Insensitive en MySQL/Postgres)
         if ($request->has('search')) {

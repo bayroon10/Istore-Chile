@@ -34,9 +34,9 @@ class DashboardController extends Controller
             $sevenDaysAgo = now()->subDays(7)->startOfDay();
             $chartData = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])
                 ->where('created_at', '>=', $sevenDaysAgo)
-                ->selectRaw('DATE(created_at) as date, SUM(total) as total_sales')
-                ->groupBy(DB::raw('DATE(created_at)'))
-                ->orderBy(DB::raw('DATE(created_at)'), 'asc')
+                ->selectRaw('CAST(created_at AS DATE) as date, SUM(total) as total_sales')
+                ->groupBy(DB::raw('CAST(created_at AS DATE)'))
+                ->orderBy(DB::raw('CAST(created_at AS DATE)'), 'asc')
                 ->get()
                 ->map(fn($item) => [
                     'fecha' => $item->date,
@@ -60,7 +60,7 @@ class DashboardController extends Controller
                 'chart' => $chartData,
                 'recent_orders' => OrderResource::collection($recentOrders),
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("[/api/estadisticas] Error: " . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
@@ -115,7 +115,7 @@ class DashboardController extends Controller
                 ],
                 'top_valuable_products' => $topValuableProducts,
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("[/api/admin/stats/warehouse] Error: " . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
@@ -159,8 +159,8 @@ class DashboardController extends Controller
             // Obtener ventas reales agrupadas por día (usando CAST para PostgreSQL)
             $sales = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing', 'processing_payment'])
                 ->where('created_at', '>=', $sevenDaysAgo)
-                ->selectRaw('DATE(created_at) as date, SUM(total) as total_sales')
-                ->groupBy(DB::raw('DATE(created_at)'))
+                ->selectRaw('CAST(created_at AS DATE) as date, SUM(total) as total_sales')
+                ->groupBy(DB::raw('CAST(created_at AS DATE)'))
                 ->get();
 
             foreach ($sales as $sale) {
@@ -170,7 +170,7 @@ class DashboardController extends Controller
             }
 
             return response()->json(array_values($days));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("[/api/admin/stats/sales-trend] Error: " . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
@@ -193,14 +193,15 @@ class DashboardController extends Controller
                 ->get(['id', 'name', 'stock']);
 
             $chartData = $products->map(function ($product) {
+                $name = (string) $product->name;
                 return [
-                    'producto' => strlen($product->name) > 15 ? substr($product->name, 0, 12) . '...' : $product->name,
+                    'producto' => strlen($name) > 15 ? substr($name, 0, 12) . '...' : $name,
                     'stock' => (int) $product->stock
                 ];
             });
 
             return response()->json($chartData);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error("[/api/admin/stats/critical-stock] Error: " . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
