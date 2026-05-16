@@ -23,7 +23,7 @@ class DashboardController extends Controller
                 ->sum('total');
 
             $totalOrders = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])->count();
-            
+
             $pendingOrders = Order::where('status', 'pending')->count();
 
             $activeProducts = Product::where('is_active', true);
@@ -34,9 +34,9 @@ class DashboardController extends Controller
             $sevenDaysAgo = now()->subDays(7)->startOfDay();
             $chartData = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing'])
                 ->where('created_at', '>=', $sevenDaysAgo)
-                ->selectRaw('CAST(created_at AS DATE) as date, SUM(total) as total_sales')
-                ->groupBy(DB::raw('CAST(created_at AS DATE)'))
-                ->orderBy(DB::raw('CAST(created_at AS DATE)'), 'asc')
+                ->selectRaw('DATE(created_at) as date, SUM(total) as total_sales')
+                ->groupBy(DB::raw('DATE(created_at)'))
+                ->orderBy(DB::raw('DATE(created_at)'), 'asc')
                 ->get()
                 ->map(fn($item) => [
                     'fecha' => $item->date,
@@ -52,7 +52,7 @@ class DashboardController extends Controller
             return response()->json([
                 'kpis' => [
                     'total_revenue' => (float) $totalRevenue,
-                    'total_orders'  => $totalOrders,
+                    'total_orders' => $totalOrders,
                     'pending_orders' => $pendingOrders,
                     'low_stock_alerts' => $lowStockCount + $outOfStockCount,
                     'out_of_stock' => $outOfStockCount,
@@ -76,17 +76,19 @@ class DashboardController extends Controller
     public function warehouseStats()
     {
         try {
-            $products = Product::all();
-            
-            $totalInventoryValue = $products->sum(function ($product) {
-                return $product->price * $product->stock;
-            });
+            // 1. Cálculos de inventario usando agregaciones SQL (más eficiente)
+            $totalInventoryValue = Product::sum(DB::raw('price * stock'));
+            $totalStockUnits = Product::sum('stock');
 
-            $totalStockUnits = $products->sum('stock');
-            $activeProductsCount = $products->where('is_active', true)->count();
-            
-            $lowStockCount = $products->where('is_active', true)->where('stock', '<=', 5)->where('stock', '>', 0)->count();
-            $outOfStockCount = $products->where('is_active', true)->where('stock', 0)->count();
+            // 2. Contadores filtrados
+            $activeProductsCount = Product::where('is_active', true)->count();
+            $lowStockCount = Product::where('is_active', true)
+                ->where('stock', '<=', 5)
+                ->where('stock', '>', 0)
+                ->count();
+            $outOfStockCount = Product::where('is_active', true)
+                ->where('stock', 0)
+                ->count();
 
             // Productos con mayor valor inmovilizado en stock
             $topValuableProducts = Product::where('stock', '>', 0)
@@ -130,23 +132,23 @@ class DashboardController extends Controller
     {
         try {
             $sevenDaysAgo = now()->subDays(6)->startOfDay(); // últimos 7 días incluyendo hoy
-            
+
             // Inicializar los últimos 7 días con ingresos en 0
             $days = [];
             for ($i = 6; $i >= 0; $i--) {
                 $date = now()->subDays($i);
                 $englishDay = $date->format('l');
                 $dayNames = [
-                    'Monday'    => 'Lun',
-                    'Tuesday'   => 'Mar',
+                    'Monday' => 'Lun',
+                    'Tuesday' => 'Mar',
                     'Wednesday' => 'Mie',
-                    'Thursday'  => 'Jue',
-                    'Friday'    => 'Vie',
-                    'Saturday'  => 'Sab',
-                    'Sunday'    => 'Dom'
+                    'Thursday' => 'Jue',
+                    'Friday' => 'Vie',
+                    'Saturday' => 'Sab',
+                    'Sunday' => 'Dom'
                 ];
                 $spanishDay = $dayNames[$englishDay] ?? $englishDay;
-                
+
                 $days[$date->format('Y-m-d')] = [
                     'dia' => $spanishDay,
                     'fecha' => $date->format('d/m'),
@@ -157,8 +159,8 @@ class DashboardController extends Controller
             // Obtener ventas reales agrupadas por día (usando CAST para PostgreSQL)
             $sales = Order::whereIn('status', ['paid', 'shipped', 'delivered', 'processing', 'processing_payment'])
                 ->where('created_at', '>=', $sevenDaysAgo)
-                ->selectRaw('CAST(created_at AS DATE) as date, SUM(total) as total_sales')
-                ->groupBy(DB::raw('CAST(created_at AS DATE)'))
+                ->selectRaw('DATE(created_at) as date, SUM(total) as total_sales')
+                ->groupBy(DB::raw('DATE(created_at)'))
                 ->get();
 
             foreach ($sales as $sale) {
@@ -208,3 +210,4 @@ class DashboardController extends Controller
         }
     }
 }
+
