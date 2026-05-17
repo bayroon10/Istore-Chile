@@ -33,7 +33,7 @@ class ProductResource extends JsonResource
                     'is_primary' => (bool) $img->is_primary,
                 ]);
             }),
-            'created_at' => $this->created_at->toDateTimeString(),
+            'created_at' => $this->created_at?->toDateTimeString(),
         ];
     }
 }
