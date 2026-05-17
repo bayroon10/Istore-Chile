@@ -14,6 +14,11 @@ class CategoryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        \Illuminate\Support\Facades\Log::info('[OBSERVABILITY-CATEGORY-RESOURCE] Iniciando toArray()', [
+            'category_id' => $this->id,
+            'created_at_raw' => $this->created_at,
+        ]);
+
         return [
             'id' => $this->id,
             'name' => $this->name,

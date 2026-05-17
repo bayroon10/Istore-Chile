@@ -15,6 +15,14 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        \Illuminate\Support\Facades\Log::info('[OBSERVABILITY-PRODUCT-RESOURCE] Iniciando toArray()', [
+            'product_id' => $this->id,
+            'has_category' => $this->relationLoaded('category'),
+            'has_primary_image' => $this->relationLoaded('primaryImage'),
+            'has_images' => $this->relationLoaded('images'),
+            'created_at_raw' => $this->created_at,
+        ]);
+
         return [
             'id' => $this->id,
             'name' => $this->name,
