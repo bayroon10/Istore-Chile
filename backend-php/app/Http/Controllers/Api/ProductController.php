@@ -25,7 +25,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        \Illuminate\Support\Facades\Log::info('[OBSERVABILITY-INDEX] Iniciando index()', ['request' => $request->all()]);
+        \Illuminate\Support\Facades\Log::channel('stderr')->error('[OBSERVABILITY-INDEX] Iniciando index()', ['request' => $request->all()]);
 
         $query = Product::query()
             ->with(['category', 'images', 'primaryImage'])
@@ -48,19 +48,19 @@ class ProductController extends Controller
             });
         }
 
-        \Illuminate\Support\Facades\Log::info('[OBSERVABILITY-INDEX] Query construido', [
+        \Illuminate\Support\Facades\Log::channel('stderr')->error('[OBSERVABILITY-INDEX] Query construido', [
             'sql' => $query->toSql(),
             'bindings' => $query->getBindings()
         ]);
 
         $products = $query->latest()->paginate($request->get('per_page', 12));
 
-        \Illuminate\Support\Facades\Log::info('[OBSERVABILITY-INDEX] Paginación realizada', [
+        \Illuminate\Support\Facades\Log::channel('stderr')->error('[OBSERVABILITY-INDEX] Paginación realizada', [
             'total_products' => $products->total(),
             'items_count' => count($products->items())
         ]);
 
-        \Illuminate\Support\Facades\Log::info('[OBSERVABILITY-INDEX] Retornando ProductResource::collection');
+        \Illuminate\Support\Facades\Log::channel('stderr')->error('[OBSERVABILITY-INDEX] Retornando ProductResource::collection');
 
         return ProductResource::collection($products);
     }
