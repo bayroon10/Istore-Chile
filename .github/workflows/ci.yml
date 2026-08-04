@@ -12,6 +12,8 @@ permissions:
 jobs:
   Backend_Validation:
     runs-on: ubuntu-latest
+    env:
+      APP_KEY: "testing-key-for-phpunit-32bytes!"
     defaults:
       run:
         working-directory: backend-php
