@@ -31,17 +31,20 @@ class CartController extends Controller
         $user = null;
 
         try {
-            // Intentamos obtener el usuario via Sanctum. 
-            // Si el token es inválido o expiró, capturamos el error para no devolver 401 
-            // en rutas que deberían ser accesibles para invitados (usando session_id).
             $user = $request->user('sanctum');
         } catch (AuthenticationException $e) {
             $user = null;
         }
 
+        $sessionId = $request->header('X-Session-Id');
+
+        if (!$user && (!$sessionId || !\Illuminate\Support\Str::isUuid($sessionId))) {
+            throw new \InvalidArgumentException('El header X-Session-Id es requerido y debe tener un formato UUIDv4 válido.');
+        }
+
         return [
             'user'       => $user,
-            'session_id' => $request->header('X-Session-Id'),  // UUID del frontend
+            'session_id' => $sessionId,
         ];
     }
 
@@ -57,6 +60,10 @@ class CartController extends Controller
 
     private function errorResponse(Exception $e): JsonResponse
     {
+        if ($e instanceof \InvalidArgumentException) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
         Log::warning('Cart request could not be processed.', [
             'exception_class' => $e::class,
             'exception_message' => $e->getMessage(),
@@ -78,9 +85,8 @@ class CartController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
-        ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
-
         try {
+            ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
             $cart = $this->cartService->getCartWithDetails($user, $sessionId);
             return $this->cartResponse($cart);
         } catch (Exception $e) {
@@ -102,9 +108,8 @@ class CartController extends Controller
             'quantity'    => 'integer|min:1',
         ]);
 
-        ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
-
         try {
+            ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
             $cart = $this->cartService->addItem(
                 $user,
                 $sessionId,
@@ -131,9 +136,8 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:0',
         ]);
 
-        ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
-
         try {
+            ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
             $cart = $this->cartService->updateItemQuantity(
                 $user,
                 $sessionId,
@@ -154,9 +158,8 @@ class CartController extends Controller
      */
     public function removeItem(Request $request, int $productId): JsonResponse
     {
-        ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
-
         try {
+            ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
             $cart = $this->cartService->removeItem($user, $sessionId, $productId);
             return $this->cartResponse($cart);
         } catch (Exception $e) {
@@ -171,9 +174,8 @@ class CartController extends Controller
      */
     public function clear(Request $request): JsonResponse
     {
-        ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
-
         try {
+            ['user' => $user, 'session_id' => $sessionId] = $this->resolveIdentity($request);
             $cart = $this->cartService->clearCart($user, $sessionId);
             return $this->cartResponse($cart);
         } catch (Exception $e) {
@@ -192,7 +194,7 @@ class CartController extends Controller
     public function sync(Request $request): JsonResponse
     {
         $request->validate([
-            'session_id' => 'required|string',
+            'session_id' => 'required|string|uuid',
         ]);
 
         $user = $request->user();

@@ -137,4 +137,24 @@ class ProductControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.slug', 'test-product-slug');
     }
+
+    /**
+     * Test that per_page is capped at maximum 100 and minimum 1.
+     */
+    public function test_per_page_is_capped_at_100_and_minimum_1(): void
+    {
+        Product::factory()->count(110)->create(['is_active' => true]);
+
+        // Requesting 500 should be capped to 100
+        $responseMax = $this->getJson('/api/products?per_page=500');
+        $responseMax->assertStatus(200)
+            ->assertJsonCount(100, 'data')
+            ->assertJsonPath('meta.per_page', 100);
+
+        // Requesting 0 or negative should be floored to 1
+        $responseMin = $this->getJson('/api/products?per_page=0');
+        $responseMin->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta.per_page', 1);
+    }
 }

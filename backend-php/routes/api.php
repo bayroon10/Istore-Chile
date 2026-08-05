@@ -19,12 +19,12 @@ use App\Http\Controllers\ClienteAuthController;
 // =============================================
 // 🌍 RUTAS PÚBLICAS (No necesitan Token)
 // =============================================
-Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products', [ProductController::class, 'index'])->middleware('throttle:60,1');
 Route::get('/products/{idOrSlug}', [ProductController::class, 'show']);
-Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories', [CategoryController::class, 'index'])->middleware('throttle:60,1');
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
-Route::post('/webhooks/stripe', [WebhookController::class, 'handle']);
+Route::post('/webhooks/stripe', [WebhookController::class, 'handle'])->middleware('throttle:60,1');
 
 // Rate limiting: 30 mensajes/minuto por IP — protege costos de Gemini API
 Route::post('/chatbot', [ChatbotController::class, 'chat'])->middleware('throttle:30,1');
@@ -33,9 +33,9 @@ Route::post('/cliente/registro', [ClienteAuthController::class, 'registro'])->mi
 Route::post('/cliente/login', [ClienteAuthController::class, 'login'])->middleware('throttle:5,1');
 
 // =============================================
-// 🛒 CARRITO (Autenticado - Temporalmente para el test)
+// 🛒 CARRITO
 // =============================================
-Route::prefix('cart')->group(function () {
+Route::prefix('cart')->middleware('throttle:60,1')->group(function () {
     Route::get('/', [CartController::class, 'show']);
     Route::post('/items', [CartController::class, 'addItem']);
     Route::put('/items/{productId}', [CartController::class, 'updateItem']);
@@ -54,7 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [ClienteAuthController::class, 'logout']);
 
     // Órdenes del cliente
-    Route::post('/orders/checkout', [OrderController::class, 'checkout']);
+    Route::post('/orders/checkout', [OrderController::class, 'checkout'])->middleware('throttle:10,1');
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 });

@@ -53,7 +53,8 @@ class ProductController extends Controller
                 });
             }
 
-            $products = $query->latest()->paginate($request->get('per_page', 12));
+            $perPage = max(1, min((int) $request->get('per_page', 12), 100));
+            $products = $query->latest()->paginate($perPage);
 
             Log::debug('Product listing pagination completed.', [
                 'total_products' => $products->total(),

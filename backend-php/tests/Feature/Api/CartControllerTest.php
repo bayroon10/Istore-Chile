@@ -137,4 +137,46 @@ class CartControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.items', []);
     }
+
+    /**
+     * Test guest cart works with a valid UUIDv4 header.
+     */
+    public function test_guest_cart_works_with_valid_uuidv4_header(): void
+    {
+        $uuid = (string) \Illuminate\Support\Str::uuid();
+        $product = Product::factory()->create(['price' => 1000, 'stock' => 10, 'is_active' => true]);
+
+        $response = $this->withHeader('X-Session-Id', $uuid)
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 1,
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.items.0.product_id', $product->id);
+
+        $this->assertDatabaseHas('carts', ['session_id' => $uuid]);
+    }
+
+    /**
+     * Test guest cart rejects missing or malformed session ID with HTTP 422 without creating DB rows.
+     */
+    public function test_guest_cart_rejects_missing_or_malformed_session_id_with_422(): void
+    {
+        $product = Product::factory()->create(['price' => 1000, 'stock' => 10, 'is_active' => true]);
+
+        // Missing header
+        $responseMissing = $this->postJson('/api/cart/items', [
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+        $responseMissing->assertStatus(422);
+
+        // Malformed header
+        $responseMalformed = $this->withHeader('X-Session-Id', 'not-a-valid-uuid')
+            ->getJson('/api/cart');
+        $responseMalformed->assertStatus(422);
+
+        $this->assertDatabaseCount('carts', 0);
+    }
 }

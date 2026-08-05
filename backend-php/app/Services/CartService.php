@@ -27,8 +27,8 @@ class CartService
             );
         }
 
-        if (!$sessionId) {
-            throw new Exception('Se requiere un session_id para carritos de invitado.');
+        if (!$sessionId || !\Illuminate\Support\Str::isUuid($sessionId)) {
+            throw new \InvalidArgumentException('Se requiere un session_id en formato UUIDv4 válido para carritos de invitado.');
         }
 
         return Cart::firstOrCreate(
