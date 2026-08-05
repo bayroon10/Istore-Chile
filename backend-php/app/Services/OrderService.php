@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
@@ -18,144 +20,199 @@ class OrderService
     }
 
     /**
-     * Crea una orden a partir del carrito del usuario.
+     * Crea o recupera de forma idempotente una orden desde el carrito del usuario.
+     * Stripe se invoca solo después de confirmar la transacción local.
      *
-     * Flujo transaccional:
-     * 1. Bloquear los productos con lockForUpdate
-     * 2. Validar stock de cada ítem
-     * 3. Crear la orden con los datos de envío
-     * 4. Crear los order_items con snapshot del precio/nombre/imagen
-     * 5. Descontar stock con decrement()
-     * 6. Vaciar el carrito
-     * 7. Actualizar sales_count de cada producto
-     *
-     * @param User   $user        Usuario autenticado
-     * @param array  $shippingData Datos de dirección de envío
-     * @param string $paymentMethod Método de pago ('stripe', etc.)
-     *
-     * @throws Exception si el carrito está vacío, stock insuficiente, etc.
+     * @throws Exception si el carrito está vacío, el stock es insuficiente o el pago no se puede preparar.
      */
     public function createOrderFromCart(
         User $user,
         array $shippingData,
+        string $idempotencyKey,
         string $paymentMethod = 'stripe',
     ): array {
-        // Obtener el carrito del usuario con sus ítems
-        $cart = Cart::where('user_id', $user->id)->first();
-
-        if (!$cart || $cart->items->isEmpty()) {
-            throw new Exception('El carrito está vacío. Agrega productos antes de hacer checkout.');
+        $existingOrder = $this->findCheckoutOrder($user, $idempotencyKey);
+        if ($existingOrder !== null) {
+            return $this->checkoutResult($existingOrder, true);
         }
 
-        return DB::transaction(function () use ($cart, $user, $shippingData, $paymentMethod) {
+        try {
+            $checkout = DB::transaction(function () use ($user, $shippingData, $idempotencyKey, $paymentMethod) {
+                // Releer dentro de la sección protegida cubre solicitudes que llegaron en paralelo.
+                $existingOrder = $this->findCheckoutOrder($user, $idempotencyKey, true);
+                if ($existingOrder !== null) {
+                    return ['order' => $existingOrder, 'replayed' => true];
+                }
 
-            $subtotal = 0;
-            $orderItemsData = [];
-
-            // -------------------------------------------------------
-            // Paso 1 & 5: Validar stock, descontar y preparar ítems (Pessimistic Locking)
-            // -------------------------------------------------------
-            foreach ($cart->items as $cartItem) {
-                // 🛡️ LOCK FOR UPDATE: Bloquea la fila para evitar race conditions
-                $product = Product::where('id', $cartItem->product_id)
+                $cart = Cart::query()
+                    ->where('user_id', $user->id)
                     ->lockForUpdate()
                     ->first();
 
-                if (!$product) {
-                    throw new Exception("El producto con ID {$cartItem->product_id} ya no existe.");
+                if ($cart === null) {
+                    throw new Exception('El carrito está vacío. Agrega productos antes de hacer checkout.');
                 }
 
-                if (!$product->is_active) {
-                    throw new Exception("El producto '{$product->name}' ya no está disponible.");
+                $cartItems = CartItem::query()
+                    ->where('cart_id', $cart->id)
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($cartItems->isEmpty()) {
+                    throw new Exception('El carrito está vacío. Agrega productos antes de hacer checkout.');
                 }
 
-                if ($product->stock < $cartItem->quantity) {
-                    throw new Exception(
-                        "Stock insuficiente para '{$product->name}'. " .
-                        "Disponible: {$product->stock}, solicitado: {$cartItem->quantity}."
-                    );
+                $productIds = $cartItems->pluck('product_id')->unique()->sort()->values()->all();
+                $products = Product::query()
+                    ->with('primaryImage')
+                    ->whereIn('id', $productIds)
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+
+                $subtotal = 0;
+                $orderItemsData = [];
+
+                foreach ($cartItems as $cartItem) {
+                    $product = $products->get($cartItem->product_id);
+                    if ($product === null) {
+                        throw new Exception("El producto con ID {$cartItem->product_id} ya no existe.");
+                    }
+
+                    if (! $product->is_active) {
+                        throw new Exception("El producto '{$product->name}' ya no está disponible.");
+                    }
+
+                    if ($product->stock < $cartItem->quantity) {
+                        throw new Exception(
+                            "Stock insuficiente para '{$product->name}'. " .
+                            "Disponible: {$product->stock}, solicitado: {$cartItem->quantity}."
+                        );
+                    }
+
+                    $itemSubtotal = $product->price * $cartItem->quantity;
+                    $subtotal += $itemSubtotal;
+                    $orderItemsData[] = [
+                        'product_id' => $product->id,
+                        'product_name' => $product->name,
+                        'product_price' => $product->price,
+                        'product_image' => $product->primaryImage?->image_url,
+                        'quantity' => $cartItem->quantity,
+                        'subtotal' => $itemSubtotal,
+                    ];
                 }
 
-                $itemSubtotal = $product->price * $cartItem->quantity;
-                $subtotal += $itemSubtotal;
+                $shippingCost = match ($shippingData['shipping_method']) {
+                    'Starken' => 3990,
+                    'Chilexpress' => 4500,
+                    'Retiro' => 0,
+                };
+                $discount = 0;
+                $total = $subtotal + $shippingCost - $discount;
 
-                // Snapshot para la orden
-                $orderItemsData[] = [
-                    'product_id'    => $product->id,
-                    'product_name'  => $product->name,
-                    'product_price' => $product->price,
-                    'product_image' => $product->primaryImage?->image_url,
-                    'quantity'      => $cartItem->quantity,
-                    'subtotal'      => $itemSubtotal,
-                ];
+                $order = $this->createPendingOrder([
+                    'user_id' => $user->id,
+                    'shipping_name' => $shippingData['shipping_name'],
+                    'shipping_phone' => $shippingData['shipping_phone'],
+                    'shipping_street' => $shippingData['shipping_street'],
+                    'shipping_city' => $shippingData['shipping_city'],
+                    'shipping_region' => $shippingData['shipping_region'],
+                    'shipping_method' => $shippingData['shipping_method'],
+                    'status' => 'pending',
+                    'subtotal' => $subtotal,
+                    'shipping_cost' => $shippingCost,
+                    'discount' => $discount,
+                    'total' => $total,
+                    'payment_method' => $paymentMethod,
+                    'checkout_idempotency_key' => $idempotencyKey,
+                    'currency' => 'clp',
+                    'notes' => $shippingData['notes'] ?? null,
+                    'paid_at' => null,
+                ]);
 
-                // Descontar stock atómicamente
-                $product->decrement('stock', $cartItem->quantity);
-                $product->increment('sales_count', $cartItem->quantity);
+                foreach ($orderItemsData as $item) {
+                    OrderItem::create([...$item, 'order_id' => $order->id]);
+                }
+
+                foreach ($cartItems as $cartItem) {
+                    $product = $products->get($cartItem->product_id);
+                    $product->decrement('stock', $cartItem->quantity);
+                    $product->increment('sales_count', $cartItem->quantity);
+                }
+
+                CartItem::query()->where('cart_id', $cart->id)->delete();
+
+                return ['order' => $order, 'replayed' => false];
+            });
+        } catch (QueryException $exception) {
+            if (! $this->isCheckoutIdempotencyCollision($exception)) {
+                throw $exception;
             }
 
-            // -------------------------------------------------------
-            // Paso 2: Calcular totales (Seguridad: Calculado en servidor)
-            // -------------------------------------------------------
-            $shippingCost = match($shippingData['shipping_method']) {
-                'Starken'      => 3990,
-                'Chilexpress'  => 4500,
-                'Retiro'       => 0,
-                default        => 0
-            };
-            
-            $discount = 0; 
-            $total = $subtotal + $shippingCost - $discount;
+            $winningOrder = $this->findCheckoutOrder($user, $idempotencyKey);
+            if ($winningOrder === null) {
+                throw $exception;
+            }
 
-            // -------------------------------------------------------
-            // Paso 3: Crear la orden
-            // -------------------------------------------------------
-            $order = Order::create([
-                'user_id' => $user->id,
-                'shipping_name' => $shippingData['shipping_name'],
-                'shipping_phone' => $shippingData['shipping_phone'],
-                'shipping_street' => $shippingData['shipping_street'],
-                'shipping_city' => $shippingData['shipping_city'],
-                'shipping_region' => $shippingData['shipping_region'],
-                'shipping_method' => $shippingData['shipping_method'],
-                'status' => 'pending',
-                'subtotal' => $subtotal,
-                'shipping_cost' => $shippingCost,
-                'discount' => $discount,
-                'total' => $total,
-                'payment_method' => $paymentMethod,
-                'notes' => $shippingData['notes'] ?? null,
-                'paid_at' => null,
-            ]);
+            return $this->checkoutResult($winningOrder, true);
+        }
 
-            // -------------------------------------------------------
-            // Paso 4: Generar el PaymentIntent de Stripe
-            // -------------------------------------------------------
-            $clientSecret = null;
-            if ($paymentMethod === 'stripe') {
+        return $this->checkoutResult($checkout['order'], $checkout['replayed']);
+    }
+
+    protected function findCheckoutOrder(User $user, string $idempotencyKey, bool $lockForUpdate = false): ?Order
+    {
+        $query = Order::query()
+            ->where('user_id', $user->id)
+            ->where('checkout_idempotency_key', $idempotencyKey);
+
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
+    }
+
+    /** @param array<string, mixed> $attributes */
+    protected function createPendingOrder(array $attributes): Order
+    {
+        return Order::create($attributes);
+    }
+
+    private function checkoutResult(Order $order, bool $replayed): array
+    {
+        $clientSecret = null;
+        if ($order->payment_method === 'stripe') {
+            if ($order->stripe_payment_id !== null) {
+                $paymentIntent = $this->stripeService->retrievePaymentIntent($order->stripe_payment_id);
+                $clientSecret = $paymentIntent->client_secret ?? null;
+
+                if (! is_string($clientSecret) || $clientSecret === '') {
+                    throw new Exception('No se pudo recuperar la información de pago.');
+                }
+            } else {
+                // Stripe deduplica esta provisión con checkout-order-{order_id}.
                 $clientSecret = $this->stripeService->createPaymentIntent($order);
             }
+        }
 
-            // -------------------------------------------------------
-            // Paso 5: Crear order items finalizados
-            // -------------------------------------------------------
-            foreach ($orderItemsData as $item) {
-                OrderItem::create(array_merge($item, [
-                    'order_id' => $order->id,
-                ]));
-            }
+        return [
+            'order' => $order->load('items'),
+            'client_secret' => $clientSecret,
+            'replayed' => $replayed,
+        ];
+    }
 
+    private function isCheckoutIdempotencyCollision(QueryException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
 
-            // -------------------------------------------------------
-            // Paso 6: Vaciar el carrito
-            // -------------------------------------------------------
-            $cart->items()->delete();
-
-            return [
-                'order' => $order,
-                'client_secret' => $clientSecret,
-            ];
-        });
+        return str_contains($message, 'unique')
+            && (
+                str_contains($message, 'checkout_idempotency_key')
+                || str_contains($message, 'orders_user_checkout_idempotency_unique')
+            );
     }
 
     /**
@@ -164,6 +221,7 @@ class OrderService
     public function getUserOrders(User $user, int $perPage = 10)
     {
         return Order::where('user_id', $user->id)
+            ->notDraft()
             ->with(['items'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -175,6 +233,7 @@ class OrderService
     public function getUserOrder(User $user, int $orderId): Order
     {
         $order = Order::where('user_id', $user->id)
+            ->notDraft()
             ->with(['items'])
             ->find($orderId);
 
@@ -190,7 +249,8 @@ class OrderService
      */
     public function getAllOrders(int $perPage = 15, ?string $status = null)
     {
-        $query = Order::with(['items', 'user'])
+        $query = Order::notDraft()
+            ->with(['items', 'user'])
             ->orderBy('created_at', 'desc');
 
         if ($status) {

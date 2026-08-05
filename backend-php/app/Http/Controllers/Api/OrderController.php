@@ -7,6 +7,7 @@ use App\Http\Resources\OrderResource;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class OrderController extends Controller
@@ -15,6 +16,18 @@ class OrderController extends Controller
         private OrderService $orderService,
     ) {}
 
+    private function errorResponse(Exception $e, int $status): JsonResponse
+    {
+        Log::warning('Order request could not be processed.', [
+            'exception_class' => $e::class,
+            'exception_message' => $e->getMessage(),
+            'file' => basename($e->getFile()),
+            'line' => $e->getLine(),
+        ]);
+
+        return response()->json(['error' => 'No se pudo procesar la solicitud'], $status);
+    }
+
     // -------------------------------------------------------
     // ENDPOINTS DE CLIENTE
     // -------------------------------------------------------
@@ -22,47 +35,53 @@ class OrderController extends Controller
     /**
      * POST /api/orders/checkout
      *
-     * Convierte el carrito en una orden.
-     * Requiere autenticación.
-     *
-     * Body:
-     * {
-     *   "shipping_name": "María González",
-     *   "shipping_phone": "+56912345678",
-     *   "shipping_street": "Av. Providencia 1234",
-     *   "shipping_city": "Santiago",
-     *   "shipping_region": "Región Metropolitana",
-     *   "shipping_method": "Starken",
-     *   "shipping_cost": 3990,
-     *   "stripe_payment_id": "pi_xxx"  // Opcional, si ya se procesó el pago
-     * }
+     * Convierte el carrito en una orden. Requiere autenticación y el header
+     * Idempotency-Key con un UUID v4; la clave nunca se admite en el body.
      */
     public function checkout(Request $request): JsonResponse
     {
+        $idempotencyKey = $request->header('Idempotency-Key');
+
         $validated = $request->validate([
-            'shipping_name'     => 'required|string|max:255',
-            'shipping_phone'    => 'required|string|max:20',
-            'shipping_street'   => 'required|string|max:500',
-            'shipping_city'     => 'required|string|max:100',
-            'shipping_region'   => 'required|string|max:100',
-            'shipping_method'   => 'required|string|in:Starken,Chilexpress,Retiro',
-            'notes'             => 'nullable|string|max:1000',
+            'shipping_name' => 'required|string|max:255',
+            'shipping_phone' => 'required|string|max:20',
+            'shipping_street' => 'required|string|max:500',
+            'shipping_city' => 'required|string|max:100',
+            'shipping_region' => 'required|string|max:100',
+            'shipping_method' => 'required|string|in:Starken,Chilexpress,Retiro',
+            'notes' => 'nullable|string|max:1000',
+            'idempotency_key' => 'prohibited',
+            'checkout_idempotency_key' => 'prohibited',
+            'idempotencyKey' => 'prohibited',
+            'Idempotency-Key' => 'prohibited',
         ]);
+
+        if (! is_string($idempotencyKey) || ! preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iD',
+            $idempotencyKey,
+        )) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'Idempotency-Key' => ['El encabezado Idempotency-Key debe ser un UUID v4 válido.'],
+            ]);
+        }
 
         try {
             $result = $this->orderService->createOrderFromCart(
                 user: $request->user(),
                 shippingData: $validated,
+                idempotencyKey: $idempotencyKey,
                 paymentMethod: 'stripe',
             );
 
             return response()->json([
-                'message'       => 'Orden creada exitosamente.',
+                'message' => $result['replayed']
+                    ? 'Orden recuperada exitosamente.'
+                    : 'Orden creada exitosamente.',
                 'client_secret' => $result['client_secret'],
-                'data'          => new OrderResource($result['order']),
-            ], 201);
+                'data' => new OrderResource($result['order']),
+            ], $result['replayed'] ? 200 : 201);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse($e, 400);
         }
     }
 
@@ -106,7 +125,7 @@ class OrderController extends Controller
                 'data' => new OrderResource($order),
             ]);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 404);
+            return $this->errorResponse($e, 404);
         }
     }
 
@@ -161,7 +180,7 @@ class OrderController extends Controller
                 'data'    => new OrderResource($order),
             ]);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse($e, 400);
         }
     }
 }
