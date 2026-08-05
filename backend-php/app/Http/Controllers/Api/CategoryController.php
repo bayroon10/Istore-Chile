@@ -30,14 +30,14 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|unique:categories,slug',
             'icon' => 'nullable|string',
         ]);
 
-        $data = $request->all();
-        if (!$request->has('slug')) {
+        $data = \Illuminate\Support\Arr::only($validated, ['name', 'slug', 'icon']);
+        if (empty($data['slug'])) {
             $data['slug'] = \Illuminate\Support\Str::slug($request->name);
         }
 
@@ -51,12 +51,14 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'slug' => 'sometimes|required|string|unique:categories,slug,' . $category->id,
+            'icon' => 'sometimes|nullable|string',
         ]);
 
-        $category->update($request->all());
+        $data = \Illuminate\Support\Arr::only($validated, ['name', 'slug', 'icon']);
+        $category->update($data);
 
         return new CategoryResource($category);
     }

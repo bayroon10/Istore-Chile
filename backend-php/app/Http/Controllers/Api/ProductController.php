@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\CloudinaryService;
+use Illuminate\Support\Arr;
 
 class ProductController extends Controller
 {
@@ -82,7 +83,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:0',
@@ -92,8 +93,8 @@ class ProductController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        return DB::transaction(function () use ($request) {
-            $data = $request->all();
+        return DB::transaction(function () use ($request, $validated) {
+            $data = Arr::only($validated, ['name', 'category_id', 'price', 'compare_price', 'stock', 'description']);
             $data['slug'] = Str::slug($request->name) . '-' . uniqid();
 
             $product = Product::create($data);
@@ -131,7 +132,7 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'category_id' => 'sometimes|required|exists:categories,id',
             'price' => 'sometimes|required|numeric|min:0',
@@ -141,11 +142,11 @@ class ProductController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        return DB::transaction(function () use ($request, $product) {
-            $data = $request->all();
+        return DB::transaction(function () use ($request, $product, $validated) {
+            $data = Arr::only($validated, ['name', 'category_id', 'price', 'compare_price', 'stock', 'description']);
             
-            if ($request->has('name')) {
-                $data['slug'] = Str::slug($request->name) . '-' . $product->id;
+            if (isset($data['name'])) {
+                $data['slug'] = Str::slug($data['name']) . '-' . $product->id;
             }
 
             $product->update($data);
