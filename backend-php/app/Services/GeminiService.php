@@ -61,4 +61,89 @@ class GeminiService
             return "¡Ups! Algo salió mal en mi red neuronal. Vuelve a intentarlo pronto.";
         }
     }
+
+    /**
+     * Envía contenido estructurado a Gemini y normaliza las partes de la respuesta.
+     *
+     * @param array<int, array<string, mixed>> $contents
+     * @param array<int, array<string, mixed>> $tools
+     * @param array<string, mixed> $toolConfig
+     * @return array<int, array<string, mixed>>|array{error: string}
+     */
+    public function generateContent(array $contents, array $tools = [], array $toolConfig = []): array
+    {
+        if (!$this->apiKey) {
+            Log::error('Gemini API request failed.', [
+                'status' => null,
+                'response_size' => 0,
+            ]);
+
+            return ['error' => 'DEPENDENCY_ERROR'];
+        }
+
+        $payload = ['contents' => $contents];
+
+        if ($tools !== []) {
+            $payload['tools'] = $tools;
+        }
+
+        if ($toolConfig !== []) {
+            $payload['toolConfig'] = $toolConfig;
+        }
+
+        $model = config('services.gemini.model');
+        $timeout = (int) config('services.gemini.timeout');
+        $url = sprintf(
+            'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
+            rawurlencode((string) $model),
+            rawurlencode($this->apiKey),
+        );
+
+        try {
+            $response = Http::withHeaders(['Content-Type' => 'application/json'])
+                ->timeout($timeout)
+                ->post($url, $payload);
+
+            if ($response->failed()) {
+                Log::error('Gemini API request failed.', [
+                    'status' => $response->status(),
+                    'response_size' => strlen($response->body()),
+                ]);
+
+                return ['error' => 'DEPENDENCY_ERROR'];
+            }
+
+            $parts = $response->json('candidates.0.content.parts', []);
+
+            if (!is_array($parts)) {
+                return [];
+            }
+
+            return array_values(array_filter(array_map(function (array $part): ?array {
+                if (array_key_exists('text', $part)) {
+                    return [
+                        'type' => 'text',
+                        'text' => (string) $part['text'],
+                    ];
+                }
+
+                if (isset($part['functionCall']) && is_array($part['functionCall'])) {
+                    return [
+                        'type' => 'function_call',
+                        'name' => (string) ($part['functionCall']['name'] ?? ''),
+                        'args' => (array) ($part['functionCall']['args'] ?? []),
+                    ];
+                }
+
+                return null;
+            }, $parts)));
+        } catch (\Throwable) {
+            Log::error('Gemini API request failed.', [
+                'status' => null,
+                'response_size' => 0,
+            ]);
+
+            return ['error' => 'DEPENDENCY_ERROR'];
+        }
+    }
 }

@@ -20,7 +20,8 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->unique()->word();
+        $name = fake()->word().'-'.Str::uuid();
+
         return [
             'name' => ucfirst($name),
             'slug' => Str::slug($name),
