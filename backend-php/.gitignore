@@ -30,6 +30,7 @@ Thumbs.db
 *.local.php
 
 # Archivos .env adicionales no cubiertos arriba
+.env.testing
 .env.testing.local
 .env.staging
 .env.local

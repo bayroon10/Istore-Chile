@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
-        $middleware->prepend(\App\Http\Middleware\CookieToAuthorizationHeader::class);
+        $middleware->statefulApi();
 
         $middleware->encryptCookies(except: [
             'token_istore',

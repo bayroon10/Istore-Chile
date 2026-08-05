@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import api from '../lib/api';
 
 export default function Chatbot() {
   const [abierto, setAbierto] = useState(false);
@@ -16,26 +17,19 @@ export default function Chatbot() {
     setCargando(true);
 
     try {
-      const response = await fetch('https://istore-backend-nxvt.onrender.com/api/chatbot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensaje: input })
-      });
-      const data = await response.json();
-      setMensajes(prev => [...prev, { texto: data.respuesta, emisor: 'bot' }]);
+      const data = await api.post('/chatbot', { message: input });
+      setMensajes(prev => [...prev, { texto: data.reply, emisor: 'bot' }]);
     } catch (error) {
       setMensajes(prev => [...prev, { texto: 'Error de conexión 🔌', emisor: 'bot' }]);
     }
     setCargando(false);
   };
 
+
   return (
     <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999 }}>
-      
-      {/* LA VENTANA DEL CHAT */}
       {abierto && (
         <div style={{ background: 'white', width: '350px', height: '450px', borderRadius: '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', overflow: 'hidden', marginBottom: '15px', border: '1px solid #e5e5ea', animation: 'fadeIn 0.3s' }}>
-          
           <div style={{ background: '#1d1d1f', color: 'white', padding: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
             <span> iStore Bot</span>
             <button onClick={() => setAbierto(false)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px' }}>✖</button>
@@ -54,15 +48,12 @@ export default function Chatbot() {
             <input type="text" placeholder="Pregunta por un producto..." value={input} onChange={e => setInput(e.target.value)} style={{ flex: 1, border: 'none', outline: 'none', padding: '10px', fontSize: '14px' }} />
             <button type="submit" disabled={cargando} style={{ background: '#0071e3', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>Enviar</button>
           </form>
-
         </div>
       )}
 
-      {/* EL BOTÓN FLOTANTE */}
       <button onClick={() => setAbierto(!abierto)} style={{ width: '60px', height: '60px', borderRadius: '30px', background: '#1d1d1f', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', fontSize: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', float: 'right', transition: 'transform 0.2s' }}>
         💬
       </button>
-
     </div>
   );
 }

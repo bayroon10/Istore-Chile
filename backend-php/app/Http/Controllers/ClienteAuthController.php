@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 class ClienteAuthController extends Controller
 {
@@ -22,6 +24,11 @@ class ClienteAuthController extends Controller
             'password' => Hash::make($request->password),
             // 'role' default es 'customer', no hace falta pasarlo
         ]);
+
+        if (EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
+            Auth::login($user);
+            $request->session()->regenerate();
+        }
 
         $token = $user->createToken('customer_token')->plainTextToken;
 
@@ -46,6 +53,11 @@ class ClienteAuthController extends Controller
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['error' => 'Correo o contraseña incorrectos'], 401);
+        }
+
+        if (EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
+            Auth::login($user);
+            $request->session()->regenerate();
         }
 
         $token = $user->createToken('customer_token')->plainTextToken;
@@ -91,8 +103,23 @@ class ClienteAuthController extends Controller
 
     public function logout(Request $request)
     {
-        if ($request->user()) {
-            $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+
+        if ($user) {
+            $token = $user->currentAccessToken();
+
+            // currentAccessToken() devuelve TransientToken en flujos stateful (sesión),
+            // el cual no tiene método delete(). Solo eliminamos si es un token real de API.
+            if ($token instanceof \Laravel\Sanctum\PersonalAccessToken) {
+                $token->delete();
+            }
+
+            // Invalida la sesión web si aplica
+            if ($request->hasSession()) {
+                Auth::guard('web')->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
         }
 
         return response()->json(['message' => 'Sesión cerrada con éxito'])

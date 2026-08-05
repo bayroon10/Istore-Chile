@@ -143,3 +143,58 @@ Para estabilizar el backend de manera gratuita y eficiente:
 8. Mobile-first en todo el frontend.
 9. API responses: { success, data, error, message }.
 10. Stripe webhooks siempre con validación de signature.
+
+- **[🟢 MEJORA] `README.md`**: Menciona el proyecto como "LabStock Pro" en el título y descripción, cuando el branding real es "iStore Chile".
+  → **Solución recomendada**: Actualizar los textos del README para que coincidan con la identidad del proyecto.
+
+## 🚀 Infraestructura de Deploy
+
+### Estado actual
+- **Backend:** Intentado en Railway, pero probablemente caído o con errores de despliegue por fallos de CORS, base de datos no persistente o falta de créditos.
+- **Frontend:** Desplegado exitosamente en Vercel, pero no se puede comunicar con el backend por el problema de CORS.
+
+### Infraestructura Final (Render)
+Para estabilizar el backend de manera gratuita y eficiente:
+1. **Actualizar `nginx.conf`**: Quitar todo rastro de CORS para que Laravel haga el trabajo.
+2. **Actualizar `Dockerfile`**: Limpiar Node.js y pasos de Vite.
+3. **Desplegar en Render**:
+   - Crear un Web Service usando GitHub.
+   - Seleccionar Runtime: Docker.
+   - Render inyectará dinámicamente el `$PORT` en `entrypoint.sh`.
+4. **Variables a configurar en el Dashboard de Render**:
+   - `APP_KEY`, `APP_ENV=production`, `APP_URL=<render-url>`
+   - `DB_*` (Conectar a Neon.tech via Postgres).
+   - `ALLOWED_ORIGINS=https://istore-chile.vercel.app`
+   - Claves de Cloudinary, Gemini y Stripe.
+5. **Frontend (Vercel)**:
+   - Cambiar `VITE_API_URL` por la nueva URL de Render.
+6. **Stripe**:
+   - Actualizar el endpoint del Webhook en el Dashboard de Stripe apuntando a `<render-url>/api/webhooks/stripe`.
+
+## 📋 Features Implementadas
+- ✅ **Catálogo dinámico**: Productos paginados desde el backend.
+- ✅ **Búsqueda optimizada**: `useDebounce` aplicado en React para evitar re-renders.
+- ✅ **Carrito de compras**: Lógica de cliente/invitado unificada (sincronizable).
+- ✅ **Checkout**: Flujo con Stripe habilitado (modo test).
+- ✅ **Dashboard de Admin**: KPIs (ingresos, stock crítico, tendencias).
+- ✅ **Asistente IA**: Gemini integrado para consultas de stock.
+- ⚠️ **Webhooks**: Integración con Stripe lista, pero la comunicación con n8n requiere URL productiva.
+
+## 🎯 Próximos Pasos Sugeridos
+1. **Resolver el bloqueo de CORS**: Limpiar `nginx.conf` y asegurarse de que la URL del Vercel esté en el `.env` del backend bajo `ALLOWED_ORIGINS`.
+2. **Sanear variables y repositorios**: Eliminar `.env` expuestos y el código residual de Node en el backend.
+3. **Migrar infraestructura DB**: Asegurarse de tener Neon.tech como base productiva en lugar de SQLite, ejecutando migraciones completas.
+4. **Optimizar Chatbot**: Prevenir el desbordamiento de tokens limitando los productos inyectados al prompt.
+5. **Validar Webhooks en Producción**: Usar el CLI de Stripe para probar el flujo completo localmente o actualizar la URL remota.
+
+## 📐 Reglas del Proyecto
+1. Responde siempre en español.
+2. Código conciso, sin comentarios obvios.
+3. No instales dependencias de pago.
+4. Siempre maneja errores (try/catch + JSON response).
+5. No hardcodees secrets, usa .env.
+6. Si hay un bug, muestra el fix directo.
+7. Si falta contexto, pregunta ANTES de asumir.
+8. Mobile-first en todo el frontend.
+9. API responses: { success, data, error, message }.
+10. Stripe webhooks siempre con validación de signature.

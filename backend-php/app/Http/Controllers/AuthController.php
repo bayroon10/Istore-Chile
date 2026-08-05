@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 class AuthController extends Controller
 {
@@ -17,6 +18,11 @@ class AuthController extends Controller
 
         if (Auth::attempt($credenciales)) {
             $user = Auth::user();
+
+            if (EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
+                $request->session()->regenerate();
+            }
+
             $token = $user->createToken('token_admin')->plainTextToken;
             
             // Sincronizar carrito de invitado si existe session_id

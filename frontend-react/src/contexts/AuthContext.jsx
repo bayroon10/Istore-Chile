@@ -3,76 +3,74 @@ import api from '../lib/api';
 
 const AuthContext = createContext(null);
 
+function rememberLegacyToken(token) {
+  if (token) {
+    localStorage.setItem('token_istore', token);
+    localStorage.removeItem('cliente_token');
+  }
+}
+
+function clearLegacyAuthentication() {
+  localStorage.removeItem('token_istore');
+  localStorage.removeItem('cliente_token');
+  localStorage.removeItem('role_istore');
+  localStorage.removeItem('usuario_istore');
+  localStorage.removeItem('istore_logged_in');
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(
-    () => localStorage.getItem('token_istore') || localStorage.getItem('cliente_token')
-  );
   const [loading, setLoading] = useState(true);
 
-  const logout = useCallback(() => {
-    // Intentar invalidar el token en el servidor de manera asíncrona
-    api.post('/logout').catch(() => {});
-
-    localStorage.removeItem('token_istore');
-    localStorage.removeItem('cliente_token');
-    localStorage.removeItem('role_istore');
-    localStorage.removeItem('usuario_istore');
-    localStorage.removeItem('istore_logged_in');
-    setToken(null);
+  const clearAuthentication = useCallback(() => {
+    clearLegacyAuthentication();
     setUser(null);
   }, []);
 
-  // Al montarse, si hay token o el indicador de inicio de sesión por cookie, cargamos el perfil
-  useEffect(() => {
-    const hasToken = !!token;
-    const hasLoggedInFlag = localStorage.getItem('istore_logged_in') === 'true';
-
-    if (hasToken || hasLoggedInFlag) {
-      api.get('/cliente/perfil')
-        .then(data => {
-          setUser(data.user);
-          // Si el backend retornó token (fallback híbrido), lo guardamos
-          if (data.token) {
-            setToken(data.token);
-            localStorage.setItem('token_istore', data.token);
-          }
-        })
-        .catch(() => {
-          // Token expirado o cookie inválida → limpiamos
-          logout();
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+  const logout = useCallback(async () => {
+    try {
+      await api.post('/logout');
+    } finally {
+      clearAuthentication();
     }
-  }, [token, logout]);
+  }, [clearAuthentication]);
 
-  // Escucha el evento global 'auth:expired' disparado por api.js
-  // cuando el backend responde 401 en una request autenticada.
+
   useEffect(() => {
-    const handleAuthExpired = () => {
-      logout();
+    let mounted = true;
+
+    api.get('/cliente/perfil')
+      .then((data) => {
+        if (mounted) {
+          setUser(data.user);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
     };
-    window.addEventListener('auth:expired', handleAuthExpired);
-    return () => window.removeEventListener('auth:expired', handleAuthExpired);
-  }, [logout]);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('auth:expired', clearAuthentication);
+    return () => window.removeEventListener('auth:expired', clearAuthentication);
+  }, [clearAuthentication]);
 
   const login = useCallback(async (email, password) => {
     const data = await api.post('/cliente/login', { email, password });
-    const newToken = data.token;
 
-    // Guardar el token unificado en localStorage como fallback
-    if (newToken) {
-      localStorage.setItem('token_istore', newToken);
-      setToken(newToken);
-    }
-    localStorage.removeItem('cliente_token'); // Limpiar legacy key
-    localStorage.setItem('istore_logged_in', 'true');
-    
-    // Limpiar id de sesión temporal tras login exitoso (ya se sincronizó en el backend)
+    rememberLegacyToken(data.token);
     localStorage.removeItem('istore_session_id');
-    
     setUser(data.user);
 
     return data;
@@ -80,25 +78,14 @@ export function AuthProvider({ children }) {
 
   const adminLogin = useCallback(async (email, password) => {
     const data = await api.post('/login', { email, password });
-    const newToken = data.token;
 
-    if (newToken) {
-      localStorage.setItem('token_istore', newToken);
-      setToken(newToken);
-    }
-    localStorage.setItem('istore_logged_in', 'true');
-    localStorage.setItem('role_istore', data.role);
-    localStorage.setItem('usuario_istore', data.usuario);
-
-    // Limpiar id de sesión temporal tras login exitoso (ya se sincronizó en el backend)
+    rememberLegacyToken(data.token);
     localStorage.removeItem('istore_session_id');
 
-    // Cargar perfil completo
     try {
-      const perfil = await api.get('/cliente/perfil');
-      setUser(perfil.user);
+      const profile = await api.get('/cliente/perfil');
+      setUser(profile.user);
     } catch {
-      // Si falla, al menos tenemos datos del login
       setUser({ name: data.usuario, role: data.role });
     }
 
@@ -107,30 +94,19 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (name, email, password) => {
     const data = await api.post('/cliente/registro', { name, email, password });
-    const newToken = data.token;
 
-    if (newToken) {
-      localStorage.setItem('token_istore', newToken);
-      setToken(newToken);
-    }
-    localStorage.removeItem('cliente_token');
-    localStorage.setItem('istore_logged_in', 'true');
-    
-    // Limpiar id de sesión temporal tras registro exitoso (ya se sincronizó en el backend)
+    rememberLegacyToken(data.token);
     localStorage.removeItem('istore_session_id');
-    
     setUser(data.user);
 
     return data;
   }, []);
 
-
-
   const value = {
     user,
-    token,
+    token: api.getToken(),
     loading,
-    isAuthenticated: (!!token || localStorage.getItem('istore_logged_in') === 'true') && !!user,
+    isAuthenticated: Boolean(user),
     isAdmin: user?.role === 'admin',
     login,
     adminLogin,
