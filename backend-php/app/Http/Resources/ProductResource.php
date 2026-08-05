@@ -32,8 +32,12 @@ class ProductResource extends JsonResource
             'compare_price' => $this->compare_price ? (float) $this->compare_price : null,
             'stock' => $this->stock,
             'is_active' => (bool) $this->is_active,
-            'category' => new CategoryResource($this->whenLoaded('category')),
-            'primary_image_url' => $this->primaryImage?->image_url ?? null,
+            'category' => $this->whenLoaded('category', fn() => new CategoryResource($this->category)),
+            'primary_image_url' => $this->relationLoaded('primaryImage')
+                ? ($this->primaryImage?->image_url ?? null)
+                : ($this->relationLoaded('images')
+                    ? ($this->images->firstWhere('is_primary', true)?->image_url ?? null)
+                    : null),
             'images' => $this->whenLoaded('images', function() {
                 return $this->images->map(fn($img) => [
                     'id' => $img->id,
@@ -41,7 +45,9 @@ class ProductResource extends JsonResource
                     'is_primary' => (bool) $img->is_primary,
                 ]);
             }),
-            'created_at' => $this->created_at?->toDateTimeString(),
+            'created_at' => $this->created_at instanceof \Carbon\Carbon
+                ? $this->created_at->toDateTimeString()
+                : ($this->created_at ? \Illuminate\Support\Carbon::parse($this->created_at)->toDateTimeString() : null),
         ];
     }
 }

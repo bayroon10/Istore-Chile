@@ -25,7 +25,9 @@ class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'is_active' => (bool) $this->is_active,
             'products_count' => $this->whenCounted('products'),
-            'created_at' => $this->created_at?->toDateTimeString(),
+            'created_at' => $this->created_at instanceof \Carbon\Carbon
+                ? $this->created_at->toDateTimeString()
+                : ($this->created_at ? \Illuminate\Support\Carbon::parse($this->created_at)->toDateTimeString() : null),
         ];
     }
 }

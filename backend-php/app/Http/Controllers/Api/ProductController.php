@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Services\CloudinaryService;
 
 class ProductController extends Controller
@@ -25,44 +26,54 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        \Illuminate\Support\Facades\Log::channel('stderr')->error('[OBSERVABILITY-INDEX] Iniciando index()', ['request' => $request->all()]);
+        try {
+            Log::debug('Product listing request started.', [
+                'has_search_filter' => $request->has('search'),
+                'has_category_filter' => $request->has('category'),
+            ]);
 
-        $query = Product::query()
-            ->with(['category', 'images', 'primaryImage'])
-            ->where('is_active', true);
+            $query = Product::query()
+                ->with(['category', 'images', 'primaryImage'])
+                ->where('is_active', true);
 
-        // Búsqueda por nombre (Database Agnostic: Case Insensitive en MySQL/Postgres)
-        if ($request->has('search')) {
-            $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($request->search) . '%']);
+            // Búsqueda por nombre (Database Agnostic: Case Insensitive en MySQL/Postgres)
+            if ($request->has('search')) {
+                $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($request->search) . '%']);
+            }
+
+            // Filtro por categoría (ID o Slug)
+            if ($request->has('category')) {
+                $category = $request->category;
+                $query->whereHas('category', function ($q) use ($category) {
+                    if (is_numeric($category)) {
+                        $q->where('id', $category);
+                    } else {
+                        $q->where('slug', $category);
+                    }
+                });
+            }
+
+            $products = $query->latest()->paginate($request->get('per_page', 12));
+
+            Log::debug('Product listing pagination completed.', [
+                'total_products' => $products->total(),
+                'items_count' => count($products->items()),
+            ]);
+
+            return ProductResource::collection($products);
+        } catch (\Throwable $e) {
+            Log::error('Product listing failed.', [
+                'exception_class' => $e::class,
+                'exception_message' => $e->getMessage(),
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'error' => 'Internal Server Error',
+                'message' => 'No se pudo procesar la solicitud',
+            ], 500);
         }
-
-        // Filtro por categoría (ID o Slug)
-        if ($request->has('category')) {
-            $category = $request->category;
-            $query->whereHas('category', function ($q) use ($category) {
-                if (is_numeric($category)) {
-                    $q->where('id', $category);
-                } else {
-                    $q->where('slug', $category);
-                }
-            });
-        }
-
-        \Illuminate\Support\Facades\Log::channel('stderr')->error('[OBSERVABILITY-INDEX] Query construido', [
-            'sql' => $query->toSql(),
-            'bindings' => $query->getBindings()
-        ]);
-
-        $products = $query->latest()->paginate($request->get('per_page', 12));
-
-        \Illuminate\Support\Facades\Log::channel('stderr')->error('[OBSERVABILITY-INDEX] Paginación realizada', [
-            'total_products' => $products->total(),
-            'items_count' => count($products->items())
-        ]);
-
-        \Illuminate\Support\Facades\Log::channel('stderr')->error('[OBSERVABILITY-INDEX] Retornando ProductResource::collection');
-
-        return ProductResource::collection($products);
     }
 
     /**

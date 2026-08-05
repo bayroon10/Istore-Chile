@@ -7,7 +7,9 @@ use App\Http\Resources\CartResource;
 use App\Services\CartService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Auth\AuthenticationException;
 
 class CartController extends Controller
 {
@@ -26,8 +28,19 @@ class CartController extends Controller
      */
     private function resolveIdentity(Request $request): array
     {
+        $user = null;
+
+        try {
+            // Intentamos obtener el usuario via Sanctum. 
+            // Si el token es inválido o expiró, capturamos el error para no devolver 401 
+            // en rutas que deberían ser accesibles para invitados (usando session_id).
+            $user = $request->user('sanctum');
+        } catch (AuthenticationException $e) {
+            $user = null;
+        }
+
         return [
-            'user'       => $request->user('sanctum'),                  // null si es guest
+            'user'       => $user,
             'session_id' => $request->header('X-Session-Id'),  // UUID del frontend
         ];
     }
@@ -40,6 +53,18 @@ class CartController extends Controller
         return response()->json([
             'data' => new CartResource($cart),
         ], $status);
+    }
+
+    private function errorResponse(Exception $e): JsonResponse
+    {
+        Log::warning('Cart request could not be processed.', [
+            'exception_class' => $e::class,
+            'exception_message' => $e->getMessage(),
+            'file' => basename($e->getFile()),
+            'line' => $e->getLine(),
+        ]);
+
+        return response()->json(['error' => 'No se pudo procesar la solicitud'], 400);
     }
 
     // -------------------------------------------------------
@@ -59,7 +84,7 @@ class CartController extends Controller
             $cart = $this->cartService->getCartWithDetails($user, $sessionId);
             return $this->cartResponse($cart);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse($e);
         }
     }
 
@@ -89,7 +114,7 @@ class CartController extends Controller
 
             return $this->cartResponse($cart, 201);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse($e);
         }
     }
 
@@ -118,7 +143,7 @@ class CartController extends Controller
 
             return $this->cartResponse($cart);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse($e);
         }
     }
 
@@ -135,7 +160,7 @@ class CartController extends Controller
             $cart = $this->cartService->removeItem($user, $sessionId, $productId);
             return $this->cartResponse($cart);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse($e);
         }
     }
 
@@ -152,7 +177,7 @@ class CartController extends Controller
             $cart = $this->cartService->clearCart($user, $sessionId);
             return $this->cartResponse($cart);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse($e);
         }
     }
 
@@ -184,7 +209,7 @@ class CartController extends Controller
 
             return $this->cartResponse($cart);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return $this->errorResponse($e);
         }
     }
 }
