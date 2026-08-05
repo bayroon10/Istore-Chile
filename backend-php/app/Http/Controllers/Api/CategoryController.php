@@ -68,10 +68,10 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        // Deberíamos validar si tiene productos asociados antes de borrar
+        // Validar si tiene productos asociados antes de borrar
         if ($category->products()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete category with associated products'
+                'error' => 'Cannot delete category with associated products'
             ], 400);
         }
 

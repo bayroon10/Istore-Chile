@@ -33,7 +33,7 @@ Route::post('/cliente/registro', [ClienteAuthController::class, 'registro'])->mi
 Route::post('/cliente/login', [ClienteAuthController::class, 'login'])->middleware('throttle:5,1');
 
 // =============================================
-// 🛒 CARRITO
+// 🛒 CARRITO (Invitados con X-Session-Id UUIDv4 o Usuarios Autenticados)
 // =============================================
 Route::prefix('cart')->middleware('throttle:60,1')->group(function () {
     Route::get('/', [CartController::class, 'show']);
