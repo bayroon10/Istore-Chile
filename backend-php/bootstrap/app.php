@@ -30,6 +30,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->reportable(function (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[UNCAUGHT-EXCEPTION] ' . $e->getMessage(), [
+                'exception_class'   => $e::class,
+                'exception_message' => $e->getMessage(),
+                'file'              => basename($e->getFile()),
+                'line'              => $e->getLine(),
+            ]);
+        });
+
         // Si hay error de autenticación en la API, manda un JSON 401
         $exceptions->renderable(function (\Illuminate\Auth\AuthenticationException $e, $request) {
             if ($request->is('api/*')) {
