@@ -17,24 +17,15 @@ use App\Http\Controllers\ClienteAuthController;
 
 
 // =============================================
-// 🌍 RUTAS PÚBLICAS (No necesitan Token)
+// 🌍 RUTAS PÚBLICAS STATELESS (Sin Sesión DB / Sin Cookie Stateful)
 // =============================================
 Route::get('/products', [ProductController::class, 'index'])->middleware('throttle:60,1');
 Route::get('/products/{idOrSlug}', [ProductController::class, 'show']);
 Route::get('/categories', [CategoryController::class, 'index'])->middleware('throttle:60,1');
-
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/webhooks/stripe', [WebhookController::class, 'handle'])->middleware('throttle:60,1');
-
-// Rate limiting: 30 mensajes/minuto por IP — protege costos de Gemini API
 Route::post('/chatbot', [ChatbotController::class, 'chat'])->middleware('throttle:30,1');
 
-Route::post('/cliente/registro', [ClienteAuthController::class, 'registro'])->middleware('throttle:5,1');
-Route::post('/cliente/login', [ClienteAuthController::class, 'login'])->middleware('throttle:5,1');
-
-// =============================================
-// 🛒 CARRITO (Invitados con X-Session-Id UUIDv4 o Usuarios Autenticados)
-// =============================================
+// 🛒 CARRITO DE INVITADOS (Stateless, con X-Session-Id UUIDv4 en header)
 Route::prefix('cart')->middleware('throttle:60,1')->group(function () {
     Route::get('/', [CartController::class, 'show']);
     Route::post('/items', [CartController::class, 'addItem']);
@@ -43,53 +34,59 @@ Route::prefix('cart')->middleware('throttle:60,1')->group(function () {
     Route::delete('/', [CartController::class, 'clear']);
 });
 
-// Sync requiere autenticación
-Route::middleware('auth:sanctum')->post('/cart/sync', [CartController::class, 'sync']);
-
 // =============================================
-// 🔐 RUTAS AUTENTICADAS (Cualquier usuario con token)
+// 🔐 RUTAS STATEFUL SPA (Sanctum Session / CSRF / Auth)
 // =============================================
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/cliente/perfil', [ClienteAuthController::class, 'perfil']);
-    Route::post('/logout', [ClienteAuthController::class, 'logout']);
+Route::middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class)->group(function () {
 
-    // Órdenes del cliente
-    Route::post('/orders/checkout', [OrderController::class, 'checkout'])->middleware('throttle:10,1');
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::get('/orders/{id}', [OrderController::class, 'show']);
-});
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/cliente/registro', [ClienteAuthController::class, 'registro'])->middleware('throttle:5,1');
+    Route::post('/cliente/login', [ClienteAuthController::class, 'login'])->middleware('throttle:5,1');
 
-// =============================================
-// 🛡️ RUTAS DE ADMINISTRADOR (Token + Rol Admin)
-// =============================================
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    // Sync requiere autenticación (sincroniza carrito a usuario logueado)
+    Route::middleware('auth:sanctum')->post('/cart/sync', [CartController::class, 'sync']);
 
-    // Gestión de Inventario (CRUD de productos)
-    Route::post('/products', [ProductController::class, 'store']);
-    Route::put('/products/{id}', [ProductController::class, 'update']);
-    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+    // RUTAS AUTENTICADAS (Cualquier usuario con token/cookie)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/cliente/perfil', [ClienteAuthController::class, 'perfil']);
+        Route::post('/logout', [ClienteAuthController::class, 'logout']);
 
-    // Imágenes de Producto
-    Route::post('/products/{id}/images', [ProductImageController::class, 'store']);
-    Route::delete('/products/{id}/images/{imageId}', [ProductImageController::class, 'destroy']);
+        // Órdenes del cliente
+        Route::post('/orders/checkout', [OrderController::class, 'checkout'])->middleware('throttle:10,1');
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::get('/orders/{id}', [OrderController::class, 'show']);
+    });
 
-    // Gestión de Categorías
-    Route::post('/categories', [CategoryController::class, 'store']);
-    Route::put('/categories/{id}', [CategoryController::class, 'update']);
-    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+    // RUTAS DE ADMINISTRADOR (Token/Cookie + Rol Admin)
+    Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
-    // Dashboard y Estadísticas
-    Route::get('/estadisticas', [DashboardController::class, 'index']);
-    Route::get('/admin/stats/warehouse', [DashboardController::class, 'warehouseStats']);
-    Route::get('/admin/stats/sales-trend', [DashboardController::class, 'salesTrend']);
-    Route::get('/admin/stats/critical-stock', [DashboardController::class, 'criticalStock']);
+        // Gestión de Inventario (CRUD de productos)
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::put('/products/{id}', [ProductController::class, 'update']);
+        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
-    // Gestión de Órdenes
-    Route::get('/admin/orders', [OrderController::class, 'adminIndex']);
-    Route::put('/admin/orders/{id}/status', [OrderController::class, 'updateStatus']);
+        // Imágenes de Producto
+        Route::post('/products/{id}/images', [ProductImageController::class, 'store']);
+        Route::delete('/products/{id}/images/{imageId}', [ProductImageController::class, 'destroy']);
 
-    // Reportes
-    Route::get('/reports/products', [ReportController::class, 'exportProducts']);
+        // Gestión de Categorías
+        Route::post('/categories', [CategoryController::class, 'store']);
+        Route::put('/categories/{id}', [CategoryController::class, 'update']);
+        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+
+        // Dashboard y Estadísticas
+        Route::get('/estadisticas', [DashboardController::class, 'index']);
+        Route::get('/admin/stats/warehouse', [DashboardController::class, 'warehouseStats']);
+        Route::get('/admin/stats/sales-trend', [DashboardController::class, 'salesTrend']);
+        Route::get('/admin/stats/critical-stock', [DashboardController::class, 'criticalStock']);
+
+        // Gestión de Órdenes
+        Route::get('/admin/orders', [OrderController::class, 'adminIndex']);
+        Route::put('/admin/orders/{id}/status', [OrderController::class, 'updateStatus']);
+
+        // Reportes
+        Route::get('/reports/products', [ReportController::class, 'exportProducts']);
+    });
 });
 
 

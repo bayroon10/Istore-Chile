@@ -14,7 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(\App\Http\Middleware\AddSecurityHeaders::class);
         $middleware->trustProxies(at: '*');
-        $middleware->statefulApi();
 
         $middleware->encryptCookies(except: [
             'token_istore',

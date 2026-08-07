@@ -240,6 +240,40 @@ class CsrfStatefulApiTest extends TestCase
         // token es inválido en cualquier proceso nuevo (producción).
     }
 
+    public function test_chatbot_and_guest_cart_are_stateless_and_do_not_write_to_sessions_table(): void
+    {
+        config(['session.driver' => 'database']);
+        $initialSessionCount = \Illuminate\Support\Facades\DB::table('sessions')->count();
+
+        $uuid = (string) \Illuminate\Support\Str::uuid();
+
+        // 1. Request to POST /api/chatbot with stateful origin
+        $this->postJson('/api/chatbot', ['message' => 'Hola'], ['Origin' => self::LOCAL_ORIGIN]);
+
+        // 2. Request to GET /api/cart with stateful origin and guest session header
+        $this->getJson('/api/cart', [
+            'Origin' => self::LOCAL_ORIGIN,
+            'X-Session-Id' => $uuid,
+        ]);
+
+        // 3. Request to POST /api/cart/items with stateful origin and guest session header
+        $this->postJson('/api/cart/items', [
+            'product_id' => 1,
+            'quantity' => 1,
+        ], [
+            'Origin' => self::LOCAL_ORIGIN,
+            'X-Session-Id' => $uuid,
+        ]);
+
+        $finalSessionCount = \Illuminate\Support\Facades\DB::table('sessions')->count();
+
+        self::assertEquals(
+            $initialSessionCount,
+            $finalSessionCount,
+            'Rutas /api/chatbot y /api/cart/* no deben escribir registros en la tabla sessions'
+        );
+    }
+
     private function csrfCookies(string $origin = self::LOCAL_ORIGIN): array
     {
         $response = $this->get('/sanctum/csrf-cookie', ['Origin' => $origin]);
