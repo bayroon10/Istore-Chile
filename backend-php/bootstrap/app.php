@@ -34,8 +34,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Support\Facades\Log::channel('stderr')->error('[UNCAUGHT-EXCEPTION] ' . $e->getMessage(), [
                 'exception_class'   => $e::class,
                 'exception_message' => $e->getMessage(),
+                'previous_class'    => $e->getPrevious() ? $e->getPrevious()::class : null,
+                'previous_message'  => $e->getPrevious()?->getMessage(),
                 'file'              => basename($e->getFile()),
                 'line'              => $e->getLine(),
+                'trace'             => array_slice(explode("\n", $e->getTraceAsString()), 0, 8),
             ]);
         });
 
