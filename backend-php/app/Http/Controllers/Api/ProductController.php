@@ -64,7 +64,7 @@ class ProductController extends Controller
 
             return ProductResource::collection($products);
         } catch (\Throwable $e) {
-            Log::error('Product listing failed.', [
+            Log::channel('stderr')->error('Product listing failed.', [
                 'exception_class' => $e::class,
                 'exception_message' => $e->getMessage(),
                 'file' => basename($e->getFile()),
