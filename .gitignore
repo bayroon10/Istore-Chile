@@ -56,3 +56,12 @@ secrets.json
 .phpunit.result.cache
 .phpunit.cache/
 
+# Herramientas de agente, capturas y scripts temporales
+.agent/
+.kiro/
+.playwright-mcp/
+audit-*.png
+*.png
+check_*.php
+test_*.php
+verify_*.php
