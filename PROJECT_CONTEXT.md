@@ -1,6 +1,5 @@
 # PROJECT_CONTEXT.md — iStore Chile
 > Generado por Antigravity el 13 de mayo de 2026. Fuente de verdad del proyecto.
-
 ## 👤 Desarrollador
 - Nombre: Bairon Meneses
 - Universidad: DUOC UC, Santiago, Chile

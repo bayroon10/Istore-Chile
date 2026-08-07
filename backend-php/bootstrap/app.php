@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->reportable(function (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('[UNCAUGHT-EXCEPTION] ' . $e->getMessage(), [
+            \Illuminate\Support\Facades\Log::channel('stderr')->error('[UNCAUGHT-EXCEPTION] ' . $e->getMessage(), [
                 'exception_class'   => $e::class,
                 'exception_message' => $e->getMessage(),
                 'file'              => basename($e->getFile()),
