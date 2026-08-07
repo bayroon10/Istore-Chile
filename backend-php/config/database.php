@@ -97,7 +97,7 @@ return [
             'search_path' => 'public',
             'sslmode' => 'require',
             'options' => [
-                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::PGSQL_ATTR_DISABLE_PREPARES => true,
             ],
         ],
 
