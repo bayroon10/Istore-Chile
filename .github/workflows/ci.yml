@@ -35,6 +35,7 @@ jobs:
       DB_DATABASE: istore_testing
       DB_USERNAME: istore_user
       DB_PASSWORD: istore_pass
+      DB_SSLMODE: 'disable'
     defaults:
       run:
         working-directory: backend-php
