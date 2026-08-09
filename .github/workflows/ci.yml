@@ -12,8 +12,29 @@ permissions:
 jobs:
   Backend_Validation:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: istore_testing
+          POSTGRES_USER: istore_user
+          POSTGRES_PASSWORD: istore_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
+      APP_ENV: testing
       APP_KEY: "testing-key-for-phpunit-32bytes!"
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: istore_testing
+      DB_USERNAME: istore_user
+      DB_PASSWORD: istore_pass
     defaults:
       run:
         working-directory: backend-php
@@ -23,6 +44,8 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, pdo, sqlite
+          coverage: none
       - name: Discover Composer download cache directory
         id: composer-cache
         shell: bash
@@ -35,18 +58,13 @@ jobs:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: composer-downloads-${{ runner.os }}-${{ hashFiles('backend-php/composer.lock') }}
       - name: Install Composer dependencies
-        env:
-          APP_ENV: testing
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
         run: composer install
-      - name: Run Feature test suite
+      - name: Run database migrations
+        run: php artisan migrate --force
+      - name: Run full test suite
         if: ${{ !cancelled() }}
-        env:
-          APP_ENV: testing
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-        run: php artisan test --testsuite=Feature
+        run: php artisan test
+
   Frontend_Validation:
     runs-on: ubuntu-latest
     defaults:
