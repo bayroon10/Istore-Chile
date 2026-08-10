@@ -118,8 +118,11 @@ class ProductController extends Controller
     public function show(string $idOrSlug)
     {
         $product = Product::with(['category', 'images', 'primaryImage'])
-            ->where('id', $idOrSlug)
-            ->orWhere('slug', $idOrSlug)
+            ->when(
+                is_numeric($idOrSlug),
+                fn ($query) => $query->where('id', $idOrSlug),
+                fn ($query) => $query->where('slug', $idOrSlug)
+            )
             ->firstOrFail();
 
         return new ProductResource($product);

@@ -157,4 +157,16 @@ class ProductControllerTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('meta.per_page', 1);
     }
+
+    /**
+     * Test showing a non-existent product by text slug returns 404 without SQLSTATE[22P02] type error on Postgres.
+     */
+    public function test_show_non_existent_text_slug_returns_404_without_sql_type_error(): void
+    {
+        // Act
+        $response = $this->getJson('/api/products/non-existent-text-slug-123');
+
+        // Assert
+        $response->assertStatus(404);
+    }
 }
