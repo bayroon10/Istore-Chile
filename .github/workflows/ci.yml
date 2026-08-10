@@ -62,9 +62,15 @@ jobs:
         run: composer install
       - name: Run database migrations
         run: php artisan migrate --force
-      - name: Run full test suite
+      - name: Run Unit test suite
         if: ${{ !cancelled() }}
-        run: php artisan test
+        run: php artisan test --testsuite=Unit
+      - name: Run Feature test suite
+        if: ${{ !cancelled() }}
+        run: php artisan test --testsuite=Feature
+      - name: Run Property test suite (Santi)
+        if: ${{ !cancelled() }}
+        run: php artisan test --testsuite=Property
 
   Frontend_Validation:
     runs-on: ubuntu-latest

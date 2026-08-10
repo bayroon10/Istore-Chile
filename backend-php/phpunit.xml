@@ -10,6 +10,16 @@
         </testsuite>
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
+            <exclude>tests/Feature/Api/Santi/DraftAtomicityPropertyTest.php</exclude>
+            <exclude>tests/Feature/Api/Santi/DraftIdempotencyPropertyTest.php</exclude>
+            <exclude>tests/Feature/Api/Santi/DraftOrderStatusPropertyTest.php</exclude>
+            <exclude>tests/Feature/Api/Santi/DraftSubtotalPropertyTest.php</exclude>
+        </testsuite>
+        <testsuite name="Property">
+            <file>tests/Feature/Api/Santi/DraftAtomicityPropertyTest.php</file>
+            <file>tests/Feature/Api/Santi/DraftIdempotencyPropertyTest.php</file>
+            <file>tests/Feature/Api/Santi/DraftOrderStatusPropertyTest.php</file>
+            <file>tests/Feature/Api/Santi/DraftSubtotalPropertyTest.php</file>
         </testsuite>
     </testsuites>
     <source>
