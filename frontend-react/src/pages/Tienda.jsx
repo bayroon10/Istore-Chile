@@ -171,7 +171,7 @@ export default function Tienda() {
 
         <div className="flex-1 overflow-y-auto pr-2 space-y-6">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-gray-500 italic">
+            <div className="flex flex-col items-center justify-center h-40 text-gray-400 italic">
               <span className="text-4xl mb-4">🛒</span>
               Tu bolsa está vacía.
             </div>
@@ -352,7 +352,7 @@ export default function Tienda() {
           <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-4 md:pb-0 no-scrollbar">
             <button
               onClick={() => setCategoriaActiva('Todas')}
-              className={`px-6 py-3 rounded-full text-sm font-black transition-smooth whitespace-nowrap border ${categoriaActiva === 'Todas' ? 'bg-urban-blue text-white border-urban-blue shadow-neon-blue' : 'glass border-white/5 text-gray-500 hover:text-white'}`}
+              className={`px-6 py-3 rounded-full text-sm font-black transition-smooth whitespace-nowrap border ${categoriaActiva === 'Todas' ? 'bg-urban-blue text-white border-urban-blue shadow-neon-blue' : 'glass border-white/5 text-gray-400 hover:text-white'}`}
             >
               TODAS
             </button>
@@ -360,7 +360,7 @@ export default function Tienda() {
               <button
                 key={cat.id}
                 onClick={() => setCategoriaActiva(cat.slug)}
-                className={`px-6 py-3 rounded-full text-sm font-black transition-smooth whitespace-nowrap border ${categoriaActiva === cat.slug ? 'bg-urban-blue text-white border-urban-blue shadow-neon-blue' : 'glass border-white/5 text-gray-500 hover:text-white'}`}
+                className={`px-6 py-3 rounded-full text-sm font-black transition-smooth whitespace-nowrap border ${categoriaActiva === cat.slug ? 'bg-urban-blue text-white border-urban-blue shadow-neon-blue' : 'glass border-white/5 text-gray-400 hover:text-white'}`}
               >
                 {cat.name.toUpperCase()}
               </button>
@@ -372,12 +372,12 @@ export default function Tienda() {
         <div className="pb-24">
           <div className="flex items-end justify-between mb-10">
             <h2 className="text-4xl font-black tracking-tighter">
-              EL PRÓXIMO NIVEL <span className="text-gray-600">({totalEnPantalla})</span>
+              EL PRÓXIMO NIVEL <span className="text-gray-400">({totalEnPantalla})</span>
             </h2>
           </div>
 
           {productos.length === 0 && !cargando ? (
-            <div className="text-center py-20 glass rounded-[3rem] border-dashed border-white/10 text-gray-500 text-xl italic font-medium">
+            <div className="text-center py-20 glass rounded-[3rem] border-dashed border-white/10 text-gray-400 text-xl italic font-medium">
               No se han encontrado resultados en este cuadrante. 🛰️
             </div>
           ) : (
@@ -410,7 +410,7 @@ export default function Tienda() {
                         </span>
                         <div className="text-right">
                           {p.compare_price > 0 && (
-                            <span className="block text-xs text-gray-600 line-through">
+                            <span className="block text-xs text-gray-400 line-through">
                               ${Number(p.compare_price).toLocaleString()}
                             </span>
                           )}
@@ -478,7 +478,7 @@ export default function Tienda() {
                 )}
 
                 {!hayMas && productos.length > 0 && (
-                  <p className="text-gray-600 font-bold text-xs uppercase tracking-[0.4em] animate-pulse">
+                  <p className="text-gray-400 font-bold text-xs uppercase tracking-[0.4em] animate-pulse">
                     Catálogo Completo — Fin de la Transmisión
                   </p>
                 )}

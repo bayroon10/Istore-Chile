@@ -230,7 +230,7 @@ export default function Inventario() {
           <h2 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
             <Package className="text-urban-blue" size={32} /> Inventario
           </h2>
-          <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-1">
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] mt-1">
             Gestiona los productos del marketplace.
           </p>
         </div>
@@ -272,7 +272,7 @@ export default function Inventario() {
               onChange={e => setFormulario({...formulario, category_id: e.target.value})} 
               className="w-full h-14 bg-white/5 border border-white/10 rounded-[1.2rem] px-5 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all appearance-none cursor-pointer"
             >
-              <option value="" className="bg-pitch-black text-gray-500">Categoría</option>
+              <option value="" className="bg-pitch-black text-gray-400">Categoría</option>
               {categorias.map(cat => (
                 <option key={cat.id} value={cat.id} className="bg-pitch-black text-white">{cat.name}</option>
               ))}
@@ -378,19 +378,19 @@ export default function Inventario() {
                 {/* Textos del Producto */}
                 <div className="truncate">
                   <h4 className="text-white font-bold text-base tracking-tight hover:text-urban-blue transition-colors truncate">{p.name}</h4>
-                  <p className="text-gray-500 font-bold uppercase tracking-wider text-[10px] mt-0.5">{p.category?.name || "Sin Categoría"}</p>
+                  <p className="text-gray-400 font-bold uppercase tracking-wider text-[10px] mt-0.5">{p.category?.name || "Sin Categoría"}</p>
                 </div>
               </div>
 
               {/* Precio */}
               <div className="w-full md:w-32 flex md:block items-center justify-between">
-                <span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Precio</span>
+                <span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Precio</span>
                 <span className="text-white font-black tracking-tight text-lg">${p.price.toLocaleString()}</span>
               </div>
 
               {/* Stock */}
               <div className="w-full md:w-24 flex md:block items-center justify-between">
-                <span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Stock</span>
+                <span className="md:hidden text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Stock</span>
                 <span className={`font-bold text-sm px-3 py-1 rounded-full ${p.stock <= 3 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-white/5 text-gray-300 border border-white/5'}`}>
                   {p.stock} {p.stock === 1 ? 'unidad' : 'unidades'}
                 </span>

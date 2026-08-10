@@ -63,7 +63,7 @@ export default function ChatAssistant() {
                 </div>
                 <div>
                     <h4 className="text-sm font-black text-white tracking-widest uppercase">Santi <span className="text-urban-blue"></span></h4>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Especialista iStore</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Especialista iStore</p>
                 </div>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white transition-colors text-xl">✕</button>

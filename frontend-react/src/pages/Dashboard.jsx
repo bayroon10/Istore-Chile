@@ -79,7 +79,7 @@ export default function Dashboard() {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="text-4xl font-black tracking-tighter text-white">CENTRAL DE MANDO <span className="text-urban-blue"></span></h2>
-          <p className="text-gray-500 text-sm font-bold uppercase tracking-widest mt-2">Métricas en tiempo real — iStore Chile Hub.</p>
+          <p className="text-gray-400 text-sm font-bold uppercase tracking-widest mt-2">Métricas en tiempo real — iStore Chile Hub.</p>
         </div>
         <div
           className="relative flex items-center gap-2 glass px-4 py-2 rounded-full border-white/5 cursor-default"
@@ -103,7 +103,7 @@ export default function Dashboard() {
         <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-emerald-500 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
           <DollarSign size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Ingresos Totales</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Ingresos Totales</p>
             <h3 className="text-2xl font-black text-white tracking-tighter">${revCount.toLocaleString()}</h3>
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function Dashboard() {
         <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-blue-500 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
           <ShoppingBag size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Volumen Histórico</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Volumen Histórico</p>
             <h3 className="text-2xl font-black text-white tracking-tighter">{ordCount}</h3>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function Dashboard() {
         <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-amber-500 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
           <Package size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Órdenes Pendientes</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Órdenes Pendientes</p>
             <h3 className="text-2xl font-black text-white tracking-tighter">{pendCount}</h3>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function Dashboard() {
         <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-red-500 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
           <BarChart2 size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Stock Crítico</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Stock Crítico</p>
             <h3 className="text-2xl font-black text-white tracking-tighter">{stockCount}</h3>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function Dashboard() {
         <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-emerald-400 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
           <DollarSign size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Ingresos BI Semanal</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Ingresos BI Semanal</p>
             <h3 className="text-2xl font-black text-white tracking-tighter flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Dato de muestra - pendiente integración real" />
               $1,520,000
@@ -151,7 +151,7 @@ export default function Dashboard() {
         <div className="glass-dark p-6 rounded-[2rem] border-l-4 border-l-blue-400 group relative overflow-hidden hover:-translate-y-0.5 hover:border-urban-blue/15 transition-all duration-300 flex flex-col justify-between">
           <Monitor size={40} className="absolute top-4 right-4 text-white opacity-20" />
           <div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Equipos Vendidos BI</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Equipos Vendidos BI</p>
             <h3 className="text-2xl font-black text-white tracking-tighter flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Dato de muestra - pendiente integración real" />
               14
@@ -251,12 +251,12 @@ export default function Dashboard() {
           {/* Column headers */}
           <div className="grid grid-cols-4 gap-4 px-4 pb-3 border-b border-white/5">
             {['ORDEN','CLIENTE','ESTADO','TOTAL'].map(h => (
-              <p key={h} className={`text-[9px] font-black text-gray-600 uppercase tracking-[0.2em] ${h==='TOTAL' ? 'text-right' : ''}`}>{h}</p>
+              <p key={h} className={`text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] ${h==='TOTAL' ? 'text-right' : ''}`}>{h}</p>
             ))}
           </div>
 
           {estadisticas.recent_orders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
               <BarChart2 size={36} className="opacity-30 mb-3" />
               <p className="text-xs font-black uppercase tracking-widest">Sin datos suficientes aún</p>
             </div>
@@ -338,7 +338,7 @@ export default function Dashboard() {
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-center">Gestionar Bodega</span>
             </Link>
             <div className="glass-dark p-8 rounded-[2rem] border border-white/5 flex flex-col items-center justify-center gap-2">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Valor Bodega</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Valor Bodega</p>
               <h4 className="text-2xl font-black text-white tracking-tighter">${capitalInvertido.toLocaleString()}</h4>
             </div>
           </div>

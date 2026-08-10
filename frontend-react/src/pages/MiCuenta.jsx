@@ -151,12 +151,12 @@ export default function MiCuenta() {
           {loadingOrders ? (
             <div className="glass-dark rounded-[2rem] p-16 text-center">
               <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-gray-600 text-xs font-black uppercase tracking-widest">Cargando pedidos...</p>
+              <p className="text-gray-400 text-xs font-black uppercase tracking-widest">Cargando pedidos...</p>
             </div>
           ) : historial.length === 0 ? (
             <div className="glass-dark rounded-[2rem] p-20 text-center">
               <Package size={48} className="text-gray-700 mb-4 mx-auto" />
-              <p className="text-gray-500 font-bold mb-8">Aún no realizas ningún pedido</p>
+              <p className="text-gray-400 font-bold mb-8">Aún no realizas ningún pedido</p>
               <a
                 href="/"
                 className="inline-block px-8 py-4 rounded-2xl bg-blue-500 text-white font-black uppercase text-sm tracking-widest hover:shadow-neon-blue transition-all"
@@ -173,12 +173,12 @@ export default function MiCuenta() {
                     {/* Order header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="space-y-1">
-                        <span className="font-mono text-xs text-gray-500">#{order.order_number}</span>
+                        <span className="font-mono text-xs text-gray-400">#{order.order_number}</span>
                         <div className="flex items-center gap-3">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${badge}`}>
                             {order.status_label}
                           </span>
-                          <span className="text-gray-600 text-xs">
+                          <span className="text-gray-400 text-xs">
                             {new Date(order.created_at).toLocaleDateString('es-CL', { year: 'numeric', month: 'short', day: 'numeric' })}
                           </span>
                         </div>
@@ -208,7 +208,7 @@ export default function MiCuenta() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-white text-sm font-bold truncate">{item.product_name}</p>
-                                <p className="text-gray-600 text-xs">× {item.quantity}</p>
+                                <p className="text-gray-400 text-xs">× {item.quantity}</p>
                               </div>
                               <p className="text-white text-sm font-black font-mono shrink-0">
                                 ${Number(item.subtotal).toLocaleString()}
@@ -252,12 +252,12 @@ export default function MiCuenta() {
         <div className="bg-black/50 p-1.5 rounded-2xl flex gap-2 mb-10 border border-white/5">
           <button 
             onClick={() => setModo('login')} 
-            className={`flex-1 py-3 px-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${modo === 'login' ? 'bg-urban-blue text-white shadow-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}>
+            className={`flex-1 py-3 px-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${modo === 'login' ? 'bg-urban-blue text-white shadow-neon-blue' : 'text-gray-400 hover:text-gray-300'}`}>
             Ingresar
           </button>
           <button 
             onClick={() => setModo('registro')} 
-            className={`flex-1 py-3 px-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${modo === 'registro' ? 'bg-urban-blue text-white shadow-neon-blue' : 'text-gray-500 hover:text-gray-300'}`}>
+            className={`flex-1 py-3 px-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${modo === 'registro' ? 'bg-urban-blue text-white shadow-neon-blue' : 'text-gray-400 hover:text-gray-300'}`}>
             Registrar
           </button>
         </div>
@@ -265,7 +265,7 @@ export default function MiCuenta() {
         <form onSubmit={manejarSubmit} className="space-y-5">
           {modo === 'registro' && (
             <div className="group">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Nombre Real</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Nombre Real</label>
               <input
                 type="text"
                 placeholder="EJ: Bairon Doe"
@@ -278,7 +278,7 @@ export default function MiCuenta() {
           )}
 
           <div className="group">
-            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Identidad Electrónica</label>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Identidad Electrónica</label>
             <input
               type="email"
               placeholder="correo@istore.cl"
@@ -290,7 +290,7 @@ export default function MiCuenta() {
           </div>
 
           <div className="group">
-            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Código de Seguridad</label>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-1.5 block group-focus-within:text-blue-400 transition-colors">Código de Seguridad</label>
             <input
               type="password"
               placeholder="••••••••"
@@ -312,7 +312,7 @@ export default function MiCuenta() {
         <div className="mt-10 text-center">
           <button 
             onClick={() => navigate('/tienda')} 
-            className="text-gray-500 hover:text-urban-blue font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mx-auto">
+            className="text-gray-400 hover:text-urban-blue font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mx-auto">
             <span>←</span> Volver al Catálogo
           </button>
         </div>

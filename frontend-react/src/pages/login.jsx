@@ -59,26 +59,26 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="flex flex-col gap-6">
           <div className="group">
-             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-urban-blue transition-colors">Identidad Digital</label>
+             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-urban-blue transition-colors">Identidad Digital</label>
              <input 
               type="email" 
               placeholder="correo@istore.cl" 
               required 
               value={email} 
               onChange={e => setEmail(e.target.value)} 
-              className="w-full p-4 rounded-2xl border border-white/5 bg-black/40 text-white placeholder:text-gray-600 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all duration-300" 
+              className="w-full p-4 rounded-2xl border border-white/5 bg-black/40 text-white placeholder:text-gray-400 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all duration-300" 
             />
           </div>
           
           <div className="group">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-urban-blue transition-colors">Código de Acceso</label>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2 block group-focus-within:text-urban-blue transition-colors">Código de Acceso</label>
             <input 
               type="password" 
               placeholder="••••••••" 
               required 
               value={password} 
               onChange={e => setPassword(e.target.value)} 
-              className="w-full p-4 rounded-2xl border border-white/5 bg-black/40 text-white placeholder:text-gray-600 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all duration-300" 
+              className="w-full p-4 rounded-2xl border border-white/5 bg-black/40 text-white placeholder:text-gray-400 focus:border-urban-blue/50 focus:ring-4 focus:ring-urban-blue/10 outline-none transition-all duration-300" 
             />
           </div>
 
@@ -91,7 +91,7 @@ export default function Login() {
         </form>
 
         <div className="mt-8 pt-8 border-t border-white/5 text-center">
-            <p className="text-gray-600 text-xs font-bold uppercase tracking-widest">SISTEMA INTEGRADO ISTORE PRO v3.1</p>
+            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">SISTEMA INTEGRADO ISTORE PRO v3.1</p>
         </div>
       </div>
     </div>

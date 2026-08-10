@@ -10,7 +10,7 @@ export default function Footer() {
           <div className="flex items-center gap-2">
             <span className="text-2xl font-black tracking-tighter text-white">iStore<span className="text-urban-blue"></span></span>
           </div>
-          <p className="text-gray-500 text-sm font-medium max-w-xs uppercase tracking-widest leading-relaxed">
+          <p className="text-gray-400 text-sm font-medium max-w-xs uppercase tracking-widest leading-relaxed">
             Equipamiento táctico para tu ecosistema digital.
           </p>
         </div>
@@ -42,7 +42,7 @@ export default function Footer() {
             <a href="javascript:void(0)" aria-label="Sintonizar Instagram" className="h-10 w-10 glass border border-white/10 flex items-center justify-center rounded-full hover:border-urban-blue transition-colors">📸</a>
             <a href="javascript:void(0)" aria-label="Sintonizar Twitter" className="h-10 w-10 glass border border-white/10 flex items-center justify-center rounded-full hover:border-urban-blue transition-colors">🐦</a>
           </div>
-          <p className="text-gray-600 text-[10px] uppercase font-black tracking-widest pt-4">© 2026 iStore Chile — Urban Tech Wear.</p>
+          <p className="text-gray-400 text-[10px] uppercase font-black tracking-widest pt-4">© 2026 iStore Chile — Urban Tech Wear.</p>
         </div>
 
       </div>

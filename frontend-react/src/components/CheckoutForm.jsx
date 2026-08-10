@@ -114,7 +114,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
               pattern={field.pattern}
               className="peer w-full h-14 bg-carbon-grey/40 border border-white/5 rounded-[1.2rem] px-5 pt-4 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all"
             />
-            <label className="absolute left-5 top-4 text-gray-500 text-sm font-bold uppercase tracking-widest pointer-events-none transition-all duration-300 peer-focus:-top-1 peer-focus:left-4 peer-focus:text-[10px] peer-focus:text-urban-blue peer-[:not(:placeholder-shown)]:-top-1 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-urban-blue">
+            <label className="absolute left-5 top-4 text-gray-400 text-sm font-bold uppercase tracking-widest pointer-events-none transition-all duration-300 peer-focus:-top-1 peer-focus:left-4 peer-focus:text-[10px] peer-focus:text-urban-blue peer-[:not(:placeholder-shown)]:-top-1 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-urban-blue">
               {field.label}
             </label>
           </div>
@@ -155,7 +155,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
 
       {/* MÉTODO DE ENVÍO (SINCRONIZADO CON BACKEND) */}
       <div className="space-y-3">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 pl-2">Método de Envío</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 pl-2">Método de Envío</p>
         <div className="relative group">
           <select
             value={shippingMethod}
@@ -172,7 +172,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
 
       {/* TARJETA STRIPE (URBAN STYLE) */}
       <div className="space-y-3">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 pl-2">Información de Pago</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 pl-2">Información de Pago</p>
         <div className="glass-dark p-6 rounded-[1.2rem] border border-white/5 group focus-within:border-urban-blue/30 transition-all">
           <CardElement options={{
             style: {
@@ -204,7 +204,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
         </button>
       </div>
 
-      <p className="text-[10px] text-center text-gray-600 font-bold uppercase tracking-widest leading-relaxed">
+      <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
         🔒 Encriptación AES-256 de grado militar.<br />Certificado por Stripe & iStore .
       </p>
     </form>
