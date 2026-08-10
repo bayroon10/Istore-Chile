@@ -43,7 +43,8 @@ export default function ChatAssistant() {
       {!isOpen && (
         <button 
           onClick={() => setIsOpen(true)}
-          className="relative w-16 h-16 rounded-full bg-urban-blue flex items-center justify-center text-3xl shadow-neon-glow animate-pulse hover:scale-110 transition-all duration-300 group"
+          aria-label="Abrir asistente de compras Santi"
+          className="relative w-16 h-16 rounded-full bg-urban-blue flex items-center justify-center text-3xl shadow-neon-glow animate-pulse hover:scale-110 transition-all duration-300 group cursor-pointer"
         >
           <div className="absolute inset-0 bg-urban-blue rounded-full blur-[20px] opacity-40 group-hover:opacity-80 transition-opacity"></div>
           <span className="relative z-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">🤖</span>
@@ -52,7 +53,7 @@ export default function ChatAssistant() {
 
       {/* 💬 VENTANA DE CHAT (URBAN DARK) */}
       {isOpen && (
-        <div className="glass-dark w-[90vw] max-w-[380px] h-[550px] rounded-[2.5rem] shadow-neon-glow flex flex-col overflow-hidden border border-white/10 animate-in slide-in-from-bottom-5 fade-in duration-300">
+        <div className="glass-dark w-[90vw] sm:w-[380px] h-[75dvh] max-h-[550px] rounded-[2.5rem] shadow-neon-glow flex flex-col overflow-hidden border border-white/10 animate-in slide-in-from-bottom-5 fade-in duration-300">
           
           {/* HEADER URBANO */}
           <div className="bg-carbon-grey/50 p-6 flex justify-between items-center border-b border-white/5 backdrop-blur-xl">
@@ -66,7 +67,13 @@ export default function ChatAssistant() {
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Especialista iStore</p>
                 </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white transition-colors text-xl">✕</button>
+            <button
+              onClick={() => setIsOpen(false)}
+              aria-label="Cerrar asistente de chat"
+              className="text-gray-400 hover:text-white transition-colors text-xl cursor-pointer"
+            >
+              ✕
+            </button>
           </div>
 
           {/* MENSAJES (STYLE APP) */}
@@ -105,7 +112,8 @@ export default function ChatAssistant() {
                 <button 
                     type="submit" 
                     disabled={loading || !input.trim()}
-                    className="absolute right-2 w-8 h-8 rounded-full bg-urban-blue text-white flex items-center justify-center text-xs shadow-neon-blue hover:shadow-neon-glow transition-all disabled:opacity-50"
+                    aria-label="Enviar mensaje"
+                    className="absolute right-2 w-8 h-8 rounded-full bg-urban-blue text-white flex items-center justify-center text-xs shadow-neon-blue hover:shadow-neon-glow transition-all disabled:opacity-50 cursor-pointer"
                 >
                     ➤
                 </button>

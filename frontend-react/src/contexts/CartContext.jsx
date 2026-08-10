@@ -8,6 +8,11 @@ export function CartProvider({ children }) {
   const { user, token, isAuthenticated } = useAuth();
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [verCarrito, setVerCarrito] = useState(false);
+
+  const abrirCarrito = useCallback(() => setVerCarrito(true), []);
+  const cerrarCarrito = useCallback(() => setVerCarrito(false), []);
+  const toggleCarrito = useCallback(() => setVerCarrito(prev => !prev), []);
 
   // -------------------------------------------------------
   // Cargar el carrito al montar o cuando cambia el usuario
@@ -95,6 +100,13 @@ export function CartProvider({ children }) {
     items: cart?.items || [],
     totalItems: cart?.total_items || 0,
     totalPrice: cart?.total_price || 0,
+
+    // Estado visual del drawer global
+    verCarrito,
+    setVerCarrito,
+    abrirCarrito,
+    cerrarCarrito,
+    toggleCarrito,
 
     // Acciones
     addItem,

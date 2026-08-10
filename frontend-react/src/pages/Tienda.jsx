@@ -20,7 +20,6 @@ const stripePromise = key ? loadStripe(key) : null;
 export default function Tienda() {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [verCarrito, setVerCarrito] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [categoriaActiva, setCategoriaActiva] = useState('Todas');
   const [mostrarCheckout, setMostrarCheckout] = useState(false);
@@ -39,8 +38,16 @@ export default function Tienda() {
   const debouncedSearch = useDebounce(busqueda, 500);
 
   // Carrito del backend vía CartContext
-  const { items, totalItems, totalPrice, addItem, updateQuantity, removeItem, refreshCart } = useCart();
+  const { items, totalItems, totalPrice, addItem, updateQuantity, removeItem, refreshCart, setVerCarrito } = useCart();
   const { isAuthenticated } = useAuth();
+
+  // Detectar ?checkout=true en la URL para abrir el modal de checkout si viene redirigido desde CartDrawer
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('checkout') === 'true') {
+      setMostrarCheckout(true);
+    }
+  }, []);
 
   // 1. Cargar categorías al inicio
   useEffect(() => {
@@ -161,92 +168,6 @@ export default function Tienda() {
           </div>
         </div>
       )}
-
-      {/* 🛍️ SIDE-CART DRAWER (PINTA TECH-WEAR) */}
-      <div className={`fixed inset-y-0 right-0 z-[150] w-full max-w-sm glass-dark border-l border-white/10 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] transform transition-transform duration-500 ease-out p-6 flex flex-col ${verCarrito ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex items-center justify-between mb-8 border-b border-white/10 pb-4">
-          <h3 className="text-2xl font-black">Tu Bolsa <span className="text-urban-blue">({totalItems})</span></h3>
-          <button onClick={() => setVerCarrito(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white">✕</button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto pr-2 space-y-6">
-          {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-gray-400 italic">
-              <span className="text-4xl mb-4">🛒</span>
-              Tu bolsa está vacía.
-            </div>
-          ) : (
-            items.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 group">
-                <div className="w-20 h-20 bg-space-grey rounded-2xl flex items-center justify-center border border-white/5 group-hover:border-urban-blue/30 transition-all">
-                  <img
-                    src={item.product_image && !item.product_image.includes('via.placeholder.com') ? item.product_image : `https://placehold.co/80x80/0a0a0a/3b82f6?text=${encodeURIComponent((item.product_name || 'i').slice(0, 2))}`}
-                    alt={item.product_name || 'Producto'}
-                    loading="lazy"
-                    onError={(e) => { e.target.src = 'https://placehold.co/80x80/000/3b82f6?text=i'; }}
-                    className="w-16 h-16 object-contain"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm truncate">{item.product_name}</p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <button onClick={() => updateQuantity(item.product_id, item.quantity - 1)} className="w-6 h-6 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-urban-blue/20 transition-all">-</button>
-                    <span className="text-sm font-black">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.product_id, item.quantity + 1)} className="w-6 h-6 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-urban-blue/20 transition-all">+</button>
-                    <button onClick={() => removeItem(item.product_id)} className="ml-auto text-xs font-bold text-red-500/80 hover:text-red-500 transition-colors uppercase tracking-widest">Eliminar</button>
-                  </div>
-                </div>
-                <div className="text-right font-black text-urban-blue">${item.subtotal.toLocaleString()}</div>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="mt-8 pt-6 border-t border-white/10">
-          <div className="flex justify-between items-center mb-6 px-2">
-            <span className="text-gray-400 font-bold uppercase tracking-tight">Gran Total</span>
-            <span className="text-3xl font-black text-white">${totalPrice.toLocaleString()}</span>
-          </div>
-          <button
-            disabled={items.length === 0}
-            onClick={() => {
-              if (!isAuthenticated) {
-                Swal.fire({
-                  title: 'Inicia Sesión',
-                  text: 'Debes estar autenticado para comprar.',
-                  icon: 'info',
-                  background: '#000',
-                  color: '#fff',
-                  confirmButtonColor: '#0071e3'
-                }).then(() => window.location.href = '/mi-cuenta');
-                return;
-              }
-              setVerCarrito(false);
-              setMostrarCheckout(true);
-            }}
-            className="w-full py-5 rounded-[1.2rem] bg-urban-blue text-white font-black text-lg shadow-neon-blue hover:shadow-neon-glow transition-all duration-300 disabled:opacity-50 disabled:grayscale"
-          >
-            PAGAR AHORA ➔
-          </button>
-        </div>
-      </div>
-
-      {/* 🚀 NAVBAR URBANO */}
-      <nav className="fixed top-0 left-0 right-0 z-[100] px-10 py-6 flex items-center justify-between pointer-events-none">
-        <div className="pointer-events-auto">
-          {/* El logo ya está en la Navbar global de App.jsx, aquí podemos poner el indicador del carrito */}
-        </div>
-        <div className="pointer-events-auto flex items-center gap-4">
-          <button
-            onClick={() => setVerCarrito(true)}
-            className="glass-dark px-6 py-3 rounded-full flex items-center gap-3 group transition-all duration-300 hover:border-urban-blue/50 hover:shadow-neon-blue"
-          >
-            <span className="text-xl">🛍️</span>
-            <span className="font-black text-sm tracking-widest uppercase">Carrito</span>
-            <span className="bg-urban-blue text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black animate-pulse">{totalItems}</span>
-          </button>
-        </div>
-      </nav>
 
       {/* 🌃 CONTENIDO PRINCIPAL */}
       <div className="max-w-7xl mx-auto px-6 lg:px-10 space-y-24">
