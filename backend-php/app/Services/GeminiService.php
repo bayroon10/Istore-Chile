@@ -108,6 +108,7 @@ class GeminiService
                 Log::error('Gemini API request failed.', [
                     'status' => $response->status(),
                     'response_size' => strlen($response->body()),
+                    'response_body' => $response->body(),
                 ]);
 
                 return ['error' => 'DEPENDENCY_ERROR'];
@@ -137,10 +138,11 @@ class GeminiService
 
                 return null;
             }, $parts)));
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             Log::error('Gemini API request failed.', [
                 'status' => null,
                 'response_size' => 0,
+                'exception_message' => $e->getMessage(),
             ]);
 
             return ['error' => 'DEPENDENCY_ERROR'];
