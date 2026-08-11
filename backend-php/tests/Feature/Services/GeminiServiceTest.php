@@ -35,8 +35,8 @@ class GeminiServiceTest extends TestCase
         ]);
 
         $contents = [['role' => 'user', 'parts' => [['text' => 'Busca un cable']]]];
-        $tools = [['functionDeclarations' => [['name' => 'search_products']]]];
-        $toolConfig = ['functionCallingConfig' => ['mode' => 'AUTO']];
+        $tools = [['function_declarations' => [['name' => 'search_products']]]];
+        $toolConfig = ['function_calling_config' => ['mode' => 'AUTO']];
 
         $parts = app(GeminiService::class)->generateContent($contents, $tools, $toolConfig);
 

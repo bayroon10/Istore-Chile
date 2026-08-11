@@ -69,11 +69,11 @@ final class InternalDataLeakPropertyTest extends TestCase
 
             foreach ($modelRequests as $modelRequest) {
                 $this->assertSame([
-                    'functionCallingConfig' => ['mode' => 'AUTO'],
+                    'function_calling_config' => ['mode' => 'AUTO'],
                 ], $modelRequest['toolConfig']);
                 $this->assertSame(
                     ['check_stock', 'search_products', 'create_draft_order'],
-                    array_column($modelRequest['declarations'][0]['functionDeclarations'], 'name'),
+                    array_column($modelRequest['declarations'][0]['function_declarations'], 'name'),
                 );
                 $this->assertSentinelsAbsent(
                     json_encode($modelRequest['contents'], JSON_THROW_ON_ERROR),

@@ -81,7 +81,7 @@ TEXT;
             $parts = $this->gemini->generateContent(
                 $contents,
                 $this->executor->declarations(),
-                ['functionCallingConfig' => ['mode' => 'AUTO']],
+                ['function_calling_config' => ['mode' => 'AUTO']],
             );
 
             $response = $this->parseModelResponse($parts);

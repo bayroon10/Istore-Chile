@@ -18,7 +18,7 @@ final class ToolExecutorTest extends TestCase
         $declarations = (new ToolExecutor())->declarations();
 
         $this->assertSame(['check_stock', 'search_products', 'create_draft_order'], array_column(
-            $declarations[0]['functionDeclarations'],
+            $declarations[0]['function_declarations'],
             'name',
         ));
     }

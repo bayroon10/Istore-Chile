@@ -42,10 +42,10 @@ final class SantiAgentServiceTest extends TestCase
         $this->assertNotNull($result->draftRequestId);
         $this->assertTrue(Str::isUuid($result->draftRequestId));
         $this->assertSame(['check_stock', 'search_products', 'create_draft_order'], array_column(
-            $requests[0]['tools'][0]['functionDeclarations'],
+            $requests[0]['tools'][0]['function_declarations'],
             'name',
         ));
-        $this->assertSame(['functionCallingConfig' => ['mode' => 'AUTO']], $requests[0]['toolConfig']);
+        $this->assertSame(['function_calling_config' => ['mode' => 'AUTO']], $requests[0]['toolConfig']);
         $prompt = $requests[0]['contents'][0]['parts'][0]['text'];
         $this->assertStringContainsString('Santi', $prompt);
         $this->assertStringNotContainsString('INVENTARIO REAL ACTUAL', $prompt);

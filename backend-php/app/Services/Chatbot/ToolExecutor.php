@@ -64,11 +64,11 @@ final class ToolExecutor
         }
     }
 
-    /** @return list<array{functionDeclarations: list<array<string, mixed>>}> */
+    /** @return list<array{function_declarations: list<array<string, mixed>>}> */
     public function declarations(): array
     {
         return [[
-            'functionDeclarations' => array_map(
+            'function_declarations' => array_map(
                 fn (ToolContract $tool): array => $tool->declaration(),
                 $this->registry,
             ),

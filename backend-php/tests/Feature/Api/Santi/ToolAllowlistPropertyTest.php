@@ -31,7 +31,7 @@ final class ToolAllowlistPropertyTest extends TestCase
     public function test_unapproved_tool_names_are_rejected_without_handlers_or_database_writes(): void
     {
         [$executor, $handlers] = $this->executorWithTrackingHandlers();
-        $declaredNames = array_column($executor->declarations()[0]['functionDeclarations'], 'name');
+        $declaredNames = array_column($executor->declarations()[0]['function_declarations'], 'name');
         $databaseWrites = [];
 
         $this->assertSame(self::APPROVED_TOOL_NAMES, $declaredNames);
