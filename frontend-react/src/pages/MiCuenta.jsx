@@ -16,6 +16,17 @@ export default function MiCuenta() {
   const [formulario, setFormulario] = useState({ name: '', email: '', password: '' });
   const [loadingOrders, setLoadingOrders] = useState(false);
 
+  const [highlightedOrderId, setHighlightedOrderId] = useState(null);
+
+  // Detectar ?order_id= en la URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oid = params.get('order_id');
+    if (oid) {
+      setHighlightedOrderId(oid);
+    }
+  }, []);
+
   // Cargar historial de compras cuando hay usuario
   useEffect(() => {
     const cargarHistorial = async () => {
@@ -168,8 +179,16 @@ export default function MiCuenta() {
             <div className="space-y-6">
               {historial.map(order => {
                 const badge = statusColors[order.status] || statusColors.pending;
+                const isHighlighted = String(order.id) === String(highlightedOrderId);
                 return (
-                  <div key={order.id} className="glass-dark rounded-[2rem] p-6 space-y-4 hover:border-blue-500/20 transition-all duration-300">
+                  <div
+                    key={order.id}
+                    className={`glass-dark rounded-[2rem] p-6 space-y-4 transition-all duration-300 ${
+                      isHighlighted
+                        ? 'border-2 border-urban-blue shadow-neon-blue bg-urban-blue/10 animate-in fade-in zoom-in duration-500'
+                        : 'hover:border-blue-500/20'
+                    }`}
+                  >
                     {/* Order header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="space-y-1">

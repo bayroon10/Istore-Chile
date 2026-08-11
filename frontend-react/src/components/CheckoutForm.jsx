@@ -20,13 +20,39 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
 
   const [shippingMethod, setShippingMethod] = useState('Starken');
 
+  const [errors, setErrors] = useState({});
+
   const handleChange = (e) => {
     setDatos({ ...datos, [e.target.name]: e.target.value });
+    if (errors[e.target.name]) {
+      setErrors(prev => ({ ...prev, [e.target.name]: false }));
+    }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!stripe || !elements) return;
+
+    // Validar campos requeridos y resaltar en rojo si están vacíos
+    const nuevosErrores = {};
+    if (!datos.nombre.trim()) nuevosErrores.nombre = true;
+    if (!datos.email.trim()) nuevosErrores.email = true;
+    if (!datos.telefono.trim()) nuevosErrores.telefono = true;
+    if (!datos.direccion.trim()) nuevosErrores.direccion = true;
+    if (!datos.ciudad.trim()) nuevosErrores.ciudad = true;
+
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErrors(nuevosErrores);
+      Swal.fire({
+        title: 'Formulario Incompleto',
+        text: 'Por favor completa todos los campos requeridos marcados en rojo.',
+        icon: 'warning',
+        background: '#000',
+        color: '#fff',
+        confirmButtonColor: '#0071e3'
+      });
+      return;
+    }
 
     setCargando(true);
 
@@ -44,6 +70,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
 
       const { client_secret, data } = response.data;
       const order_id = data?.id;
+
       // 2. Confirmar pago con Stripe
       const result = await stripe.confirmCardPayment(client_secret, {
         payment_method: {
@@ -68,13 +95,16 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
         if (result.paymentIntent.status === 'succeeded') {
           Swal.fire({
             title: '¡Pago Exitoso!',
-            text: `Tu orden #${order_id} ha sido procesada. Recibirás un correo pronto.`,
+            text: `Tu orden #${order_id} ha sido procesada con éxito. Redirigiendo a tu perfil...`,
             icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
             background: '#000',
-            color: '#fff',
-            confirmButtonColor: '#0071e3'
+            color: '#fff'
+          }).then(() => {
+            onSuccess();
+            window.location.href = `/mi-cuenta?order_id=${order_id}`;
           });
-          onSuccess();
         }
       }
     } catch (error) {
@@ -112,7 +142,7 @@ export default function CheckoutForm({ total, cerrarModal, onSuccess }) {
               onChange={handleChange}
               placeholder={field.placeholder}
               pattern={field.pattern}
-              className="peer w-full h-14 bg-carbon-grey/40 border border-white/5 rounded-[1.2rem] px-5 pt-4 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all"
+              className={`peer w-full h-14 bg-carbon-grey/40 border ${errors[field.name] ? 'border-red-500/60 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-white/5'} rounded-[1.2rem] px-5 pt-4 text-white text-sm outline-none focus:border-urban-blue/50 focus:shadow-neon-blue transition-all`}
             />
             <label className="absolute left-5 top-4 text-gray-400 text-sm font-bold uppercase tracking-widest pointer-events-none transition-all duration-300 peer-focus:-top-1 peer-focus:left-4 peer-focus:text-[10px] peer-focus:text-urban-blue peer-[:not(:placeholder-shown)]:-top-1 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-urban-blue">
               {field.label}

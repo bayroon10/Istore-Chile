@@ -106,6 +106,28 @@ export default function Tienda() {
     }
   };
 
+function ProductSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+        <div key={i} className="glass-dark rounded-[2.5rem] p-7 flex flex-col h-[460px] animate-pulse border border-white/5 space-y-4">
+          <div className="flex justify-between items-center">
+            <div className="w-16 h-5 bg-white/10 rounded-full" />
+            <div className="w-20 h-5 bg-white/10 rounded-lg" />
+          </div>
+          <div className="flex-1 bg-white/5 rounded-2xl flex items-center justify-center">
+            <div className="w-24 h-24 bg-white/10 rounded-full" />
+          </div>
+          <div className="space-y-3">
+            <div className="h-5 w-3/4 bg-white/10 rounded-lg" />
+            <div className="h-12 w-full bg-white/10 rounded-2xl" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
   const agregarAlCarrito = async (producto) => {
     const pid = producto.id;
     setCardStates(prev => ({ ...prev, [pid]: 'loading' }));
@@ -124,6 +146,7 @@ export default function Tienda() {
     } else {
       setCardStates(prev => ({ ...prev, [pid]: 'success' }));
       setTimeout(() => setCardStates(prev => ({ ...prev, [pid]: null })), 1500);
+      setVerCarrito(true);
     }
   };
 
@@ -297,7 +320,9 @@ export default function Tienda() {
             </h2>
           </div>
 
-          {productos.length === 0 && !cargando ? (
+          {cargando && productos.length === 0 ? (
+            <ProductSkeleton />
+          ) : productos.length === 0 ? (
             <div className="text-center py-20 glass rounded-[3rem] border-dashed border-white/10 text-gray-400 text-xl italic font-medium">
               No se han encontrado resultados en este cuadrante. 🛰️
             </div>
