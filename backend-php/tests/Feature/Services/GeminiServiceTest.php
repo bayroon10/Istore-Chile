@@ -77,6 +77,7 @@ class GeminiServiceTest extends TestCase
             ->with('Gemini API request failed.', [
                 'status' => 503,
                 'response_size' => strlen($responseBody),
+                'response_body' => $responseBody,
             ]);
     }
 }
