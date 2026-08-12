@@ -68,10 +68,10 @@ final class ToolExecutor
     public function declarations(): array
     {
         return [[
-            'function_declarations' => array_map(
+            'function_declarations' => array_values(array_map(
                 fn (ToolContract $tool): array => $tool->declaration(),
                 $this->registry,
-            ),
+            )),
         ]];
     }
 

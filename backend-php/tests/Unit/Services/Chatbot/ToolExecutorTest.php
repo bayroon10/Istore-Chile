@@ -21,6 +21,7 @@ final class ToolExecutorTest extends TestCase
             $declarations[0]['function_declarations'],
             'name',
         ));
+        $this->assertSame([0, 1, 2], array_keys($declarations[0]['function_declarations']));
     }
 
     /** Validates: Requirements 1.6, 6.4 */
